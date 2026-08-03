@@ -31,7 +31,7 @@ export default function DashboardError({
             </p>
           </div>
           <Button onClick={() => reset()} className="gap-2">
-            <RotateCcw className="h-4 w-4" /> Try Again
+            <RotateCcw className="h-4 w-4" /> Try Again..
           </Button>
         </CardContent>
       </Card>

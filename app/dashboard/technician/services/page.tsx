@@ -99,7 +99,7 @@ export default function TechnicianServicesPage() {
 
     const price = Number(formData.price);
     if (!formData.categoryId) {
-      toast.error("Please select a service category");
+      toast.error("Please select a service category.");
       return;
     }
     if (!Number.isFinite(price) || price <= 0) {
