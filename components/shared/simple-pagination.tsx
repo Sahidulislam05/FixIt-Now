@@ -10,13 +10,6 @@ interface SimplePaginationProps {
   className?: string;
 }
 
-// ============================================================
-// shadcn-এর Pagination প্রিমিটিভ <a href> ভিত্তিক (URL-driven pagination
-// এর জন্য বানানো)। এই অ্যাপের বেশিরভাগ লিস্ট পেজ (admin tables, services
-// grid) client-side state (useState page) দিয়ে pagination করে, URL query
-// দিয়ে না — তাই সাধারণ Button-ভিত্তিক একটা কম্পোনেন্ট, যেটা যেকোনো
-// controlled state এর সাথে সরাসরি কাজ করে।
-// ============================================================
 export function SimplePagination({
   page,
   totalPages,
