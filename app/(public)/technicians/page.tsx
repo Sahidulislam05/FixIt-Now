@@ -27,8 +27,6 @@ export default function TechniciansPage() {
 
   const debouncedSearch = useDebouncedValue(search, 400);
 
-  // সার্চ বদলালে প্রথম পেজে ফিরে যাওয়া — নাহলে ইউজার এমন পেজে আটকে যেতে
-  // পারে যেখানে ফিল্টার করা রেজাল্টে কিছুই নেই
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch]);
