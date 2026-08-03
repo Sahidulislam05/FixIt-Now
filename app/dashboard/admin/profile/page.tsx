@@ -58,7 +58,7 @@ export default function AdminProfilePage() {
             <Input id="phone" name="phone" defaultValue={user?.phone || ""} />
           </div>
           <Button type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save changes"}
+            {saving ? "Saving...." : "Save changes"}
           </Button>
         </form>
       </CardContent>
