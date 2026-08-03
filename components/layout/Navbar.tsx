@@ -27,7 +27,6 @@ export function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // রোল অনুযায়ী সঠিক ড্যাশবোর্ড লিঙ্ক জেনারেট করা
   const getDashboardLink = () => {
     if (!user) return "/dashboard/customer";
     switch (user.role) {
@@ -41,7 +40,6 @@ export function Navbar() {
     }
   };
 
-  // ইউজারের নামের প্রথম ২ টি অক্ষর Avatar Fallback হিসেবে পাওয়ার জন্য
   const getInitials = (name?: string) => {
     if (!name) return "U";
     return name
