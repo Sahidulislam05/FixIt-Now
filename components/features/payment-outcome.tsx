@@ -20,19 +20,6 @@ import {
 
 export type PaymentIntent = "success" | "cancel" | "fail";
 
-// ============================================================
-// SSLCommerz-এর success/fail/cancel redirect শুধু ব্রাউজার-সাইড রিডাইরেক্ট —
-// আসল পেমেন্ট ভেরিফিকেশন হয় সার্ভার-টু-সার্ভার (POST /api/payments/confirm,
-// val_id দিয়ে)। তাই এই পেজে শুধু URL দেখেই "Payment Successful" বলে দেওয়াটা
-// বিপজ্জনক — ইউজার ম্যানুয়ালি এই URL এ গেলেও একই মেসেজ দেখাবে, অথবা গেটওয়ে
-// success এ রিডাইরেক্ট করলেও server-to-server confirm সামান্য দেরি হতে পারে।
-//
-// তাই এখানে বুকিং আইডি (ব্যাকএন্ড রিডাইরেক্ট URL এ ?bookingId=... হিসেবে
-// পাঠাবে বলে ধরে নেওয়া হচ্ছে — না থাকলে booking_id ও চেষ্টা করা হয়) দিয়ে
-// আসল বুকিং স্ট্যাটাস ফেচ করে UI দেখানো হয়, এবং স্ট্যাটাস এখনো ACCEPTED
-// থাকলে (webhook confirm প্রসেস হচ্ছে) কয়েকবার পোল করা হয়।
-// ============================================================
-
 const POLL_INTERVAL_MS = 2500;
 const MAX_POLLS = 4;
 
@@ -110,8 +97,7 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
   }, [bookingId, booking, intent, pollCount]);
 
   const verifiedPaid =
-    !!booking &&
-    ["PAID", "IN_PROGRESS", "COMPLETED"].includes(booking.status);
+    !!booking && ["PAID", "IN_PROGRESS", "COMPLETED"].includes(booking.status);
   const verifiedCancelled = !!booking && booking.status === "CANCELLED";
   const stillPendingConfirm =
     !!booking && booking.status === "ACCEPTED" && intent === "success";
@@ -190,7 +176,9 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
-      <Card className={`max-w-md w-full text-center p-8 shadow-lg ${toneClasses.border}`}>
+      <Card
+        className={`max-w-md w-full text-center p-8 shadow-lg ${toneClasses.border}`}
+      >
         <CardContent className="space-y-6 p-0">
           {checking ? (
             <div className="h-20 w-20 bg-muted text-muted-foreground rounded-full flex items-center justify-center mx-auto">
