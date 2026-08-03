@@ -8,12 +8,7 @@ import { getMyProfile } from "@/lib/api/users";
 import { Booking, Service, User } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -26,7 +21,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-// পেমেন্ট হয়ে যাওয়ার পর (PAID/IN_PROGRESS/COMPLETED) থেকেই টাকাটা আয় হিসেবে গণনা করা হচ্ছে
 const EARNED_STATUSES = ["PAID", "IN_PROGRESS", "COMPLETED"];
 
 export default function TechnicianOverviewPage() {
@@ -98,7 +92,8 @@ export default function TechnicianOverviewPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Welcome back{profile?.name ? `, ${profile.name.split(" ")[0]}` : ""} 👋
+          Welcome back{profile?.name ? `, ${profile.name.split(" ")[0]}` : ""}{" "}
+          👋
         </h1>
         <p className="text-sm text-muted-foreground">
           Here&apos;s what&apos;s happening with your services today
@@ -225,7 +220,8 @@ export default function TechnicianOverviewPage() {
           <CardContent className="space-y-2">
             <Link href="/dashboard/technician/services">
               <Button variant="outline" className="w-full justify-start gap-2">
-                <Wrench className="h-4 w-4" /> Manage Services ({services.length})
+                <Wrench className="h-4 w-4" /> Manage Services (
+                {services.length})
               </Button>
             </Link>
             <Link href="/dashboard/technician/availability">
