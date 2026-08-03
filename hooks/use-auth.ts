@@ -13,7 +13,7 @@ import { clearAuthTokens, getAccessToken, setAuthTokens } from "@/lib/cookies";
 import { useAuthStore } from "@/lib/store/auth-store";
 import type { Role } from "@/lib/types";
 
-// role অনুযায়ী কোন dashboard-এ পাঠাবে
+
 function dashboardPathForRole(role: Role) {
   if (role === "ADMIN") return "/dashboard/admin";
   if (role === "TECHNICIAN") return "/dashboard/technician";
