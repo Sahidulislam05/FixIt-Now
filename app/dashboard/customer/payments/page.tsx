@@ -20,8 +20,6 @@ import { CreditCard } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
-// আগে এই ব্যাজটা সবসময় সবুজ "PAID" স্টাইলে দেখাতো, pmt.status যা-ই হোক না কেন —
-// এখন FAILED/PENDING/CANCELLED স্ট্যাটাসের জন্যও সঠিক রঙ ও লেবেল দেখায়
 function renderPaymentStatusBadge(status: string) {
   switch (status) {
     case "PAID":

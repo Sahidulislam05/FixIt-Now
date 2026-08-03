@@ -38,16 +38,6 @@ export default function PayBookingPage({
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
 
-  // ============================================================
-  // একটা ref-based lock — শুধু React state (paying) এর উপর ভরসা করলে
-  // দুইটা দ্রুত ক্লিক (একই ইভেন্ট লুপ টার্নে) দুইবার handlePayment চালাতে
-  // পারত, কারণ setState ব্যাচিং এর কারণে re-render এর আগেই দ্বিতীয় ক্লিক
-  // ধরা পড়তে পারে। ref সাথে সাথে (synchronously) আপডেট হয়, তাই এটাই
-  // আসল ডাবল-সাবমিট গার্ড। এর উপরে booking.status চেক করে backend-এ
-  // পাঠানোর আগেই আটকে দেওয়া হচ্ছে যদি বুকিং আর ACCEPTED না থাকে
-  // (যেমন: user ব্যাক বাটনে চাপ দিয়ে আগের পেমেন্ট পেজে ফিরে এসেছে,
-  // অথবা অন্য ট্যাবে আগেই পে করে ফেলেছে)।
-  // ============================================================
   const submitLockRef = useRef(false);
 
   useEffect(() => {
