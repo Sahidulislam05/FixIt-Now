@@ -60,7 +60,6 @@ function ServicesPageContent() {
       .catch((err: Error) => console.error(err));
   }, []);
 
-  // ফিল্টার বদলালে প্রথম পেজে ফিরে যাওয়া
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, selectedCategory, debouncedMinPrice, debouncedMaxPrice]);
@@ -70,7 +69,10 @@ function ServicesPageContent() {
     let cancelled = false;
 
     const loadServices = async () => {
-      const query: Parameters<typeof getAllServices>[0] = { page, limit: PAGE_SIZE };
+      const query: Parameters<typeof getAllServices>[0] = {
+        page,
+        limit: PAGE_SIZE,
+      };
       if (debouncedSearch) query.searchTerm = debouncedSearch;
       if (selectedCategory) query.categoryId = selectedCategory;
       if (debouncedMinPrice) query.minPrice = Number(debouncedMinPrice);
@@ -94,7 +96,13 @@ function ServicesPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, selectedCategory, debouncedMinPrice, debouncedMaxPrice, page]);
+  }, [
+    debouncedSearch,
+    selectedCategory,
+    debouncedMinPrice,
+    debouncedMaxPrice,
+    page,
+  ]);
 
   const handleReset = () => {
     setSearch("");
