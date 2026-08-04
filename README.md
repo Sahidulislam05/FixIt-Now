@@ -1,139 +1,487 @@
-# FixItNow — Frontend
+# 🔧 FixItNow — Frontend
 
-A production-grade **Next.js 16 (App Router) + TypeScript** frontend for the FixItNow home-services
-marketplace, consuming the [FixItNow backend API](https://fix-it-now-bd.vercel.app).
+> A modern, production-ready **Next.js 16** frontend for a home service marketplace where customers can find trusted technicians, book services, complete online payments, and manage their bookings through role-based dashboards.
 
-See [`API_INTEGRATION.md`](./API_INTEGRATION.md) for the full frontend-component ↔ backend-endpoint map.
-
----
-
-## ⚠️ Admin login for testing
-
-The admin account isn't created by this frontend — it's seeded on the **backend** via `npm run seed`,
-using the `ADMIN_EMAIL` / `ADMIN_PASSWORD` values set in the backend's own `.env` file (see the backend
-`README.md` → _Admin Credentials_).
-
-**Fill in the actual seeded values here before sharing/submitting this project:**
-
-```
-Admin email:    <put the ADMIN_EMAIL you configured on the backend here>
-Admin password: <put the ADMIN_PASSWORD you configured on the backend here>
-```
-
-Log in at `/login` with these credentials to reach `/dashboard/admin`.
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?logo=tailwind-css)
+![React Query](https://img.shields.io/badge/TanStack_Query-React_Query-FF4154?logo=react-query)
+![License](https://img.shields.io/badge/Status-Assignment-success)
 
 ---
 
-## 🛠️ Tech Stack
+## 🌐 Live Demo
 
-| Layer        | Technology                                                            |
-| ------------ | --------------------------------------------------------------------- |
-| Framework    | Next.js 16 (App Router, Turbopack, `proxy.ts` for route protection)   |
-| Language     | TypeScript                                                            |
-| Styling      | Tailwind CSS v4 + shadcn/ui (Radix primitives)                        |
-| Server state | TanStack Query (React Query)                                          |
-| Client state | Zustand (current-user cache only — JWT cookie is the source of truth) |
-| Forms        | react-hook-form + zod                                                 |
-| Payment      | SSLCommerz (redirect-based checkout)                                  |
+- **Frontend:** https://fix-it-now-delta.vercel.app
+- **Backend API:** https://fix-it-now-bd.vercel.app
+- **Backend Repository:** https://github.com/Sahidulislam05/FixItNow-Server
 
-## 📁 Project Structure
+---
 
+# 📖 Overview
+
+FixItNow is a full-featured home service marketplace built with **Next.js App Router**, **TypeScript**, and modern React best practices.
+
+Customers can browse available services, find technicians, create bookings, complete online payments, and leave reviews.
+
+Technicians can manage their profile, services, availability schedule, and booking requests.
+
+Admins can manage users, categories, and monitor the entire platform from a centralized dashboard.
+
+This frontend consumes the REST API built in the previous backend assignment.
+
+---
+
+# ✨ Features
+
+## 🌍 Public Features
+
+- Responsive landing page
+- Featured services
+- Featured technicians
+- Browse all services
+- Search services
+- Filter by
+  - Category
+  - Location
+  - Rating
+  - Price
+- Technician profile page
+- Booking interface
+- Responsive navigation
+- Skeleton loading UI
+- Error boundaries
+- Custom 404 page
+
+---
+
+## 👤 Authentication
+
+- User Registration
+- Login
+- JWT Authentication
+- Role-based authorization
+- Protected routes
+- Route protection using **Next.js proxy.ts**
+- Persistent authentication
+- Automatic logout on expired token
+
+---
+
+## 👥 Customer Dashboard
+
+- Dashboard overview
+- Booking history
+- Booking details
+- Cancel eligible bookings
+- Payment history
+- Online payment
+- SSLCommerz integration
+- Review submission
+- Profile management
+
+---
+
+## 🛠 Technician Dashboard
+
+- Dashboard overview
+- Earnings summary
+- Booking management
+- Accept bookings
+- Decline bookings
+- Start jobs
+- Complete jobs
+- Service management
+- Availability scheduler
+- Profile management
+
+---
+
+## 👑 Admin Dashboard
+
+- Dashboard overview
+- Platform statistics
+- User management
+- Ban / Unban users
+- Booking management
+- Category management
+- Pagination
+- Search users
+
+---
+
+# 🎯 Booking Flow
+
+```text
+Customer
+    │
+    ▼
+Browse Services
+    │
+    ▼
+Select Technician
+    │
+    ▼
+Choose Time Slot
+    │
+    ▼
+Booking Requested
+    │
+    ▼
+Technician Accepts
+    │
+    ▼
+Customer Pays
+    │
+    ▼
+Job Starts
+    │
+    ▼
+Completed
+    │
+    ▼
+Leave Review
 ```
-app/
-├── (auth)/login, (auth)/register        # Public auth pages
-├── (public)/services, (public)/technicians  # Public browse + detail pages
-├── dashboard/
-│   ├── customer/                        # Bookings, payments, profile
-│   ├── technician/                      # Overview, bookings, services, availability, profile
-│   └── admin/                           # Overview, users, categories, bookings, profile
-├── payment/success | cancel | fail      # SSLCommerz redirect targets (verify real status via API)
-├── unauthorized/                        # Shown when a role hits another role's dashboard
-├── loading.tsx / error.tsx / not-found.tsx / global-error.tsx
-components/
-├── forms/        # react-hook-form + zod login/register forms
-├── layout/       # Navbar, Footer
-├── features/     # Cross-page feature components (e.g. payment-outcome verification)
-├── shared/       # Reusable primitives (e.g. SimplePagination)
-├── providers/    # React Query provider, auth hydration, toaster
-└── ui/           # shadcn/ui primitives
-hooks/            # useAuth, useDebouncedValue, etc.
-lib/
-├── api/          # One typed wrapper file per backend module — all requests go through client.ts
-├── store/        # Zustand auth store
-├── validations/  # zod schemas
-├── avatar.ts     # Deterministic avatar/illustration URLs (see note below)
-├── cookies.ts    # Token storage
-└── types.ts      # Types mirroring the backend Prisma models/API envelope
-proxy.ts          # Next.js 16's renamed middleware.ts — role-based route protection
+
+---
+
+# 👥 User Roles
+
+## Customer
+
+- Browse services
+- Book technicians
+- Pay online
+- Track bookings
+- Leave reviews
+
+---
+
+## Technician
+
+- Create services
+- Manage availability
+- Accept bookings
+- Update booking status
+- View earnings
+
+---
+
+## Admin
+
+- Manage users
+- Manage categories
+- Monitor bookings
+- Platform overview
+
+---
+
+# 🛠 Tech Stack
+
+| Category         | Technology              |
+| ---------------- | ----------------------- |
+| Framework        | Next.js 16 (App Router) |
+| Language         | TypeScript              |
+| Styling          | Tailwind CSS v4         |
+| UI Library       | shadcn/ui               |
+| State Management | Zustand                 |
+| Server State     | TanStack Query          |
+| Forms            | React Hook Form         |
+| Validation       | Zod                     |
+| Authentication   | JWT                     |
+| Payment          | SSLCommerz              |
+| HTTP Client      | Fetch API               |
+| Notifications    | Sonner                  |
+| Icons            | Lucide React            |
+
+---
+
+# 📁 Project Structure
+
+```text
+app
+├── (auth)
+│   ├── login
+│   └── register
+│
+├── (public)
+│   ├── services
+│   └── technicians
+│
+├── dashboard
+│   ├── admin
+│   ├── customer
+│   └── technician
+│
+├── payment
+│   ├── success
+│   ├── cancel
+│   └── fail
+│
+├── loading.tsx
+├── error.tsx
+├── global-error.tsx
+└── not-found.tsx
+
+components
+├── features
+├── forms
+├── layout
+├── providers
+├── shared
+└── ui
+
+hooks
+
+lib
+├── api
+├── store
+├── validations
+├── avatar.ts
+├── cookies.ts
+└── types.ts
+
+proxy.ts
 ```
 
-## 🚀 Getting Started
+---
+
+# 🔌 Backend API
+
+Base URL
+
+```text
+https://fix-it-now-bd.vercel.app
+```
+
+For the complete endpoint mapping, see
+
+```text
+API_INTEGRATION.md
+```
+
+---
+
+# 🚀 Getting Started
+
+## 1. Clone Repository
+
+```bash
+git clone https://github.com/Sahidulislam05/FixIt-Now
+```
+
+```bash
+cd FixIt-Now
+```
+
+---
+
+## 2. Install Dependencies
 
 ```bash
 npm install
-cp .env.example .env.local
-# NEXT_PUBLIC_API_URL এ ব্যাকএন্ড API URL বসাও (ডিফল্ট: প্রোডাকশন ব্যাকএন্ড)
+```
+
+---
+
+## 3. Configure Environment Variables
+
+Create
+
+```text
+.env.local
+```
+
+Add
+
+```env
+NEXT_PUBLIC_API_URL=https://fix-it-now-bd.vercel.app
+```
+
+---
+
+## 4. Run Development Server
+
+```bash
 npm run dev
 ```
 
-Runs at `http://localhost:3000`.
+Application will run at
 
-```bash
-npm run build   # production build
-npm start       # run the production build
-npm run lint    # ESLint
+```
+http://localhost:3000
 ```
 
-## 🔐 Environment Variables
+---
 
-| Key                   | Description                                                                    |
-| --------------------- | ------------------------------------------------------------------------------ |
-| `NEXT_PUBLIC_API_URL` | Base URL of the FixItNow backend API (e.g. `https://fix-it-now-bd.vercel.app`) |
+# 📦 Production Build
 
-## 🖼️ On images / `next/image`
+```bash
+npm run build
+```
 
-The backend's data model (`User`, `TechnicianProfile`, `Service`, `Category`) currently has **no image
-upload fields at all** — there's no profile-picture or service-photo storage on the backend. To still
-satisfy the "optimized images via `next/image`" requirement meaningfully rather than leaving the UI
-without any imagery, `lib/avatar.ts` generates deterministic, license-free illustration URLs (via
-DiceBear) from each user's/category's id or name, rendered through `next/image` (see
-`next.config.ts` → `images.remotePatterns`). The same user always gets the same image, so the UI stays
-stable across reloads. If the backend later adds a real photo-upload field (e.g. `avatarUrl`), only
-`lib/avatar.ts`'s callers need to switch to that field — no other component needs to change.
+```bash
+npm start
+```
 
-## 🔑 Known limitations (see `API_INTEGRATION.md` for details)
+---
 
-- **Silent token refresh isn't wired up yet.** The access token is valid for 1 day; after that, the user
-  is logged out gracefully (not silently broken) and asked to log in again. Wiring up
-  `POST /api/auth/refresh-token` for silent refresh needs a small backend change (accepting the refresh
-  token via the request body/header instead of only an httpOnly cookie), since this frontend uses
-  cross-origin `Authorization: Bearer` tokens rather than shared cookies with the backend domain.
-- **Admin bookings search** is client-side-only on the currently loaded page, because
-  `GET /api/admin/bookings` doesn't accept a free-text `searchTerm` parameter today (only
-  `status`/`page`/`limit`). Status filtering and pagination are fully server-side.
-- **Booking time slots** are generated from each technician's saved weekly availability
-  (`GET /api/technician/availability`) split into 1-hour blocks. The backend has no endpoint to report
-  which slots are _already booked_ by other customers, so the UI can prevent booking outside a
-  technician's declared working hours, but a last-mile double-booking check still relies on the backend's
-  booking-creation validation.
+# 🧪 Lint
 
-## 🧪 Manual test checklist
+```bash
+npm run lint
+```
 
-1. Register as **Customer** → browse `/services` → open a technician → book a service → see it under
-   `/dashboard/customer/bookings` as `REQUESTED`.
-2. Register a second account as **Technician** → set availability → add a service → go to
-   `/dashboard/technician/bookings` → Accept the request.
-3. Back as Customer → `Pay Now` on the now-`ACCEPTED` booking → complete the SSLCommerz sandbox checkout →
-   confirm you land on `/payment/success` showing a _verified_ `PAID` status, and that the booking list
-   shows `PAID` without a reload.
-4. Try navigating back to the same `/pay/[id]` URL after paying — confirm it now blocks re-payment instead
-   of letting you pay twice.
-5. As Technician → mark `IN_PROGRESS` → `COMPLETED`. As Customer → leave a review; confirm the review
-   button disappears afterward.
-6. Log in as **Admin** (see credentials above) → ban a user, create a category, page through
-   `/dashboard/admin/users` and `/dashboard/admin/bookings`.
+---
 
-## 👤 Author
+# 🔐 Environment Variables
+
+| Variable            | Description     |
+| ------------------- | --------------- |
+| NEXT_PUBLIC_API_URL | Backend API URL |
+
+---
+
+# 🔒 Route Protection
+
+This project uses **Next.js 16 `proxy.ts`** for route protection.
+
+Protected routes include:
+
+- Customer Dashboard
+- Technician Dashboard
+- Admin Dashboard
+
+Unauthorized users are redirected automatically.
+
+---
+
+# 💳 Payment
+
+Payment is integrated using **SSLCommerz**.
+
+Flow
+
+```text
+Booking
+    ↓
+Technician Accepts
+    ↓
+Customer Pays
+    ↓
+SSLCommerz
+    ↓
+Success / Cancel / Fail
+    ↓
+Booking Updated
+```
+
+---
+
+# 🖼 Images
+
+The current backend does not provide image upload support.
+
+To keep the UI visually consistent while still using `next/image`, the application generates deterministic avatars using **DiceBear**.
+
+This allows:
+
+- Optimized images
+- Stable UI
+- No placeholder duplication
+- Easy migration to real uploaded images later
+
+---
+
+# ⚠ Known Limitations
+
+## Silent Token Refresh
+
+Currently not implemented.
+
+Access tokens expire after one day.
+
+The frontend logs users out gracefully and redirects them to login.
+
+---
+
+## Booking Slot Validation
+
+The backend does not expose booked time slots.
+
+Available slots are generated from technician availability.
+
+Final booking validation happens on the backend.
+
+---
+
+## Admin Booking Search
+
+Search is currently client-side for the loaded page because the backend does not yet expose a free-text search endpoint.
+
+---
+
+# 🧪 Manual Testing Checklist
+
+## Customer
+
+- Register
+- Login
+- Browse services
+- Create booking
+- Cancel booking
+- Complete payment
+- Leave review
+
+---
+
+## Technician
+
+- Register
+- Create profile
+- Add services
+- Set availability
+- Accept booking
+- Complete booking
+
+---
+
+## Admin
+
+- Login
+- View statistics
+- Ban user
+- Unban user
+- Create category
+- Browse bookings
+
+---
+
+# 👨‍💻 Admin Login (Testing)
+
+The admin account is seeded from the backend.
+
+Before sharing this project, replace the placeholders below with the credentials configured in your backend `.env`.
+
+```text
+Admin Email:
+<ADMIN_EMAIL>
+
+Admin Password:
+<ADMIN_PASSWORD>
+```
+
+Login from
+
+```text
+/login
+```
+
+---
+
+# 👨‍💻Author
 
 **Sahidul Islam**  
 GitHub: [@Sahidulislam05](https://github.com/Sahidulislam05)
+
+---
