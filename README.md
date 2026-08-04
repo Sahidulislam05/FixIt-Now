@@ -6,7 +6,6 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?logo=tailwind-css)
 ![React Query](https://img.shields.io/badge/TanStack_Query-React_Query-FF4154?logo=react-query)
-![License](https://img.shields.io/badge/Status-Assignment-success)
 
 ---
 
