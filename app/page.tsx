@@ -43,51 +43,51 @@ import {
 const TESTIMONIALS = [
   {
     name: "Rafiq Ahmed",
-    role: "গ্রাহক, ধানমন্ডি",
+    role: "Customer, Dhanmondi",
     quote:
-      "রাত ১১টায় হঠাৎ পানির লাইন লিক হয়ে গিয়েছিল। FixItNow-এ বুক করার ৩০ মিনিটের মধ্যেই টেকনিশিয়ান চলে এসেছিলেন। খরচও আগেই স্পষ্ট জানা ছিল।",
+      "A water line suddenly started leaking at 11 PM. I booked through FixItNow and a technician arrived within 30 minutes with pricing clearly explained upfront.",
     rating: 5,
   },
   {
     name: "Nusrat Jahan",
-    role: "গ্রাহক, উত্তরা",
+    role: "Customer, Uttara",
     quote:
-      "AC সার্ভিসিংয়ের জন্য বুক করেছিলাম। প্রোফাইলে রেটিং আর রিভিউ দেখে টেকনিশিয়ান বেছে নেওয়াটা সহজ হয়েছে, কাজও পরিপাটি হয়েছে।",
+      "I booked AC servicing and found it easy to select a technician using their profile, reviews, and ratings. The final service was clean and professional.",
     rating: 5,
   },
   {
     name: "Kamal Hossain",
-    role: "টেকনিশিয়ান, ইলেকট্রিশিয়ান",
+    role: "Technician, Electrical",
     quote:
-      "একজন ইলেকট্রিশিয়ান হিসেবে এই প্ল্যাটফর্মে যুক্ত হওয়ার পর নিয়মিত বুকিং পাচ্ছি। পেমেন্টও সময়মতো অ্যাকাউন্টে চলে আসে।",
+      "Since joining this platform as an electrician, I’ve received regular job requests and payments are processed on time.",
     rating: 5,
   },
 ];
 
 const FAQS = [
   {
-    q: "কীভাবে একটি সার্ভিস বুক করব?",
-    a: "প্রথমে Services পেজ থেকে আপনার প্রয়োজনীয় ক্যাটাগরি বা সার্চ দিয়ে সার্ভিস খুঁজুন, তারপর পছন্দের সার্ভিসে ক্লিক করে তারিখ-সময় দিয়ে বুকিং কনফার্ম করুন। বুকিংয়ের জন্য লগইন থাকা প্রয়োজন।",
+    q: "How do I book a service?",
+    a: "Visit the Services page, browse or search for the service you need, then select a service and confirm a date-time slot. You must be signed in to complete a booking.",
   },
   {
-    q: "পেমেন্ট কখন করতে হয়?",
-    a: "টেকনিশিয়ান আপনার বুকিং রিকোয়েস্ট গ্রহণ করার পর এবং কাজ শেষ হওয়ার পর SSLCommerz-এর মাধ্যমে নিরাপদে অনলাইন পেমেন্ট করতে পারবেন। ড্যাশবোর্ডের 'My Bookings' থেকে পেমেন্ট স্ট্যাটাস দেখা যায়।",
+    q: "When do I make payment?",
+    a: "After the technician accepts your booking request and the service is completed, payment can be made securely using SSLCommerz. You can check the status from the dashboard.",
   },
   {
-    q: "টেকনিশিয়ানরা কি যাচাইকৃত?",
-    a: "হ্যাঁ, প্রতিটি টেকনিশিয়ান নিবন্ধনের সময় স্কিল ও পরিচয় সংক্রান্ত তথ্য যাচাইয়ের মধ্য দিয়ে যান। গ্রাহকরা প্রতিটি প্রোফাইলে রেটিং ও রিভিউ দেখেও সিদ্ধান্ত নিতে পারেন।",
+    q: "Are technicians verified?",
+    a: "Yes. Every technician goes through identity and skill screening during registration. Customers can also review ratings and professional profile information before booking.",
   },
   {
-    q: "বুকিং বাতিল করা যাবে কি?",
-    a: "সার্ভিস শুরু হওয়ার আগ পর্যন্ত ড্যাশবোর্ড থেকে বুকিং বাতিল করা যায়। বারবার বাতিল এড়াতে নির্ধারিত সময়ের আগেই সিদ্ধান্ত নেওয়ার পরামর্শ দেওয়া হয়।",
+    q: "Can I cancel a booking?",
+    a: "Bookings can be cancelled from the dashboard while the service has not started. We recommend doing this before the assigned time window to avoid repeated cancellation.",
   },
   {
-    q: "কীভাবে টেকনিশিয়ান হিসেবে যুক্ত হব?",
-    a: "Register পেজ থেকে 'Technician' হিসেবে অ্যাকাউন্ট খুলুন, আপনার স্কিল ও অভিজ্ঞতার তথ্য দিন এবং প্রোফাইল সম্পন্ন করুন। এরপর ড্যাশবোর্ড থেকে সার্ভিস যুক্ত করে বুকিং গ্রহণ শুরু করতে পারবেন।",
+    q: "How do I join as a technician?",
+    a: "Create an account from the Register page as a Technician, complete your profile, and add services from your dashboard to start accepting bookings.",
   },
   {
-    q: "কোন এলাকায় সার্ভিস পাওয়া যায়?",
-    a: "বর্তমানে ঢাকা শহরের বিভিন্ন এলাকায় সক্রিয় টেকনিশিয়ানরা সার্ভিস দিচ্ছেন। প্রতিটি সার্ভিস লিস্টিংয়ে নির্দিষ্ট লোকেশন উল্লেখ থাকে, বুকিংয়ের আগে তা দেখে নিন।",
+    q: "Which areas do you serve?",
+    a: "FixItNow is currently active across several areas of Dhaka. Service listings show location details so you can review availability before booking.",
   },
 ];
 
@@ -137,11 +137,11 @@ export default function HomePage() {
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
 
     if (!trimmed) {
-      setNewsletterError("ইমেইল অ্যাড্রেস দিতে হবে");
+      setNewsletterError("Email address is required");
       return;
     }
     if (!isValidEmail) {
-      setNewsletterError("সঠিক ইমেইল অ্যাড্রেস দিন");
+      setNewsletterError("Enter a valid email address");
       return;
     }
 
@@ -150,7 +150,9 @@ export default function HomePage() {
     await new Promise((resolve) => setTimeout(resolve, 700));
     setNewsletterLoading(false);
     setNewsletterEmail("");
-    toast.success("Subscribed! ধন্যবাদ, নতুন অফার আপডেট আপনার ইমেইলে যাবে।");
+    toast.success(
+      "Subscribed! You’ll get the latest service updates in your inbox.",
+    );
   };
 
   // Handle Search Submission
@@ -170,7 +172,7 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55, ease: "easeOut" }}
-        className="relative bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-24 border-b"
+        className="relative bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-24"
       >
         <div className="container mx-auto px-4 text-center max-w-4xl space-y-6">
           <Badge
@@ -237,7 +239,7 @@ export default function HomePage() {
       <motion.section
         {...cardReveal}
         transition={{ duration: 0.45, ease: "easeOut" }}
-        className="py-12 bg-muted/30 border-b"
+        className="py-12 bg-muted/30"
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
@@ -381,7 +383,7 @@ export default function HomePage() {
                         Starting from
                       </span>
                       <span className="text-xl font-bold text-primary">
-                        ৳{service.price}
+                        BDT {service.price}
                       </span>
                     </div>
                     <Link href={`/services/${service.id}`}>
@@ -403,7 +405,7 @@ export default function HomePage() {
       <motion.section
         {...cardReveal}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="py-16 bg-muted/20 border-t border-b"
+        className="py-16 bg-muted/20"
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-10">
@@ -618,10 +620,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-xl mx-auto mb-12">
             <h2 className="text-3xl font-bold tracking-tight">
-              গ্রাহকরা যা বলছেন
+              What customers are saying
             </h2>
             <p className="text-muted-foreground mt-2">
-              হাজারো সন্তুষ্ট গ্রাহক ও টেকনিশিয়ানের অভিজ্ঞতা
+              Real stories from customers and technicians using FixItNow
             </p>
           </div>
 
@@ -654,15 +656,15 @@ export default function HomePage() {
         {...cardReveal}
         transition={{ duration: 0.5, ease: "easeOut" }}
         id="faq"
-        className="py-16 bg-muted/30 border-y scroll-mt-16"
+        className="py-16 bg-muted/30 scroll-mt-16"
       >
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold tracking-tight">
-              সচরাচর জিজ্ঞাসিত প্রশ্ন
+              Frequently asked questions
             </h2>
             <p className="text-muted-foreground mt-2">
-              FixItNow সম্পর্কে আরও জানতে নিচের প্রশ্নগুলো দেখুন
+              Learn more about how FixItNow works
             </p>
           </div>
 
@@ -695,11 +697,11 @@ export default function HomePage() {
           <div className="rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div className="space-y-3">
               <h2 className="text-2xl md:text-3xl font-bold">
-                নতুন অফার ও আপডেট পেতে সাবস্ক্রাইব করুন
+                Stay in the loop with new offers and updates
               </h2>
               <p className="text-primary-foreground/85 text-sm md:text-base">
-                সিজনাল ডিসকাউন্ট, নতুন সার্ভিস ক্যাটাগরি আর প্ল্যাটফর্ম আপডেট
-                সবার আগে জানতে আপনার ইমেইল দিন।
+                Get seasonal discounts, new service categories, and platform
+                updates straight to your inbox.
               </p>
             </div>
 
@@ -755,8 +757,7 @@ export default function HomePage() {
                   variant="link"
                   className="text-primary-foreground gap-1 px-0"
                 >
-                  অথবা এখনই সার্ভিস ব্রাউজ করুন{" "}
-                  <ArrowRight className="h-4 w-4" />
+                  Browse services now <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
             </div>

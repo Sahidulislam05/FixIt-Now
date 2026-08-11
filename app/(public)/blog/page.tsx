@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Calendar, User } from "lucide-react";
 
 export const metadata = {
@@ -74,6 +75,15 @@ export default function BlogPage() {
                 <Calendar className="w-3.5 h-3.5" />
                 <span>{post.date}</span>
               </div>
+            </div>
+
+            <div className="mt-6">
+              <Link
+                href={`/blog/${post.id}`}
+                className="inline-flex items-center text-sm font-semibold text-primary hover:underline"
+              >
+                Read article
+              </Link>
             </div>
           </article>
         ))}

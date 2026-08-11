@@ -211,7 +211,7 @@ export function RegisterForm() {
                     />
                   </FormControl>
                   <FormLabel className="text-xs font-normal text-muted-foreground leading-relaxed">
-                    আমি{" "}
+                    I agree to the{" "}
                     <Link
                       href="/terms"
                       target="_blank"
@@ -219,15 +219,14 @@ export function RegisterForm() {
                     >
                       Terms of Service
                     </Link>{" "}
-                    এবং{" "}
+                    and{" "}
                     <Link
                       href="/privacy"
                       target="_blank"
                       className="text-primary hover:underline"
                     >
                       Privacy Policy
-                    </Link>{" "}
-                    এর সাথে সম্মত
+                    </Link>
                   </FormLabel>
                 </div>
                 <FormMessage />

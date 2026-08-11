@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata: Metadata = {
   title: "About Us | FixItNow",
   description:
-    "FixItNow একটি হোম সার্ভিস মার্কেটপ্লেস — যাচাইকৃত টেকনিশিয়ানদের সাথে বাড়ির যেকোনো সমস্যার সমাধান খুঁজে পান দ্রুত ও নিরাপদভাবে।",
+    "FixItNow is a home service marketplace where customers can find trusted, verified technicians for fast and secure home support.",
 };
 
 const values = [
@@ -24,51 +24,51 @@ const values = [
     icon: ShieldCheck,
     title: "Verified Technicians",
     description:
-      "প্রতিটি টেকনিশিয়ান রেজিস্ট্রেশনের সময় স্কিল ও পরিচয় যাচাইয়ের মধ্য দিয়ে যান, যাতে আপনি নিশ্চিন্তে বুকিং করতে পারেন।",
+      "Every technician is reviewed, screened, and assessed before joining our network so you can book with confidence.",
   },
   {
     icon: Target,
     title: "Transparent Pricing",
     description:
-      "বুকিং করার আগেই সার্ভিসের মূল্য দেখতে পাবেন — কোনো লুকানো চার্জ বা শেষ মুহূর্তের দরকষাকষি নেই।",
+      "You see service pricing before booking, with no hidden charges or last-minute surprises.",
   },
   {
     icon: Clock,
     title: "Fast Response",
     description:
-      "রিকোয়েস্ট পাঠানোর পর টেকনিশিয়ানরা দ্রুত রেসপন্স করেন, জরুরি প্রয়োজনে সময়মতো সাহায্য পান।",
+      "Once a service request is submitted, nearby technicians can respond quickly and help when you need it most.",
   },
   {
     icon: HeartHandshake,
     title: "Customer First",
     description:
-      "বুকিং থেকে পেমেন্ট পর্যন্ত পুরো প্রক্রিয়া সহজ ও স্বচ্ছ রাখাই আমাদের মূল লক্ষ্য।",
+      "From booking to payment, we design every step to be simple, reliable, and transparent.",
   },
 ];
 
 const steps = [
   {
-    step: "১",
-    title: "সার্ভিস খুঁজুন",
+    step: "1",
+    title: "Find a service",
     description:
-      "ক্যাটাগরি বা সার্চ দিয়ে আপনার প্রয়োজনীয় সার্ভিস খুঁজে বের করুন।",
+      "Search by category or use the service directory to find what you need.",
   },
   {
-    step: "২",
-    title: "টেকনিশিয়ান বেছে নিন",
+    step: "2",
+    title: "Choose a technician",
     description:
-      "রেটিং, অভিজ্ঞতা ও মূল্য দেখে পছন্দের টেকনিশিয়ান নির্বাচন করুন।",
+      "Review ratings, experience, skills, and pricing before selecting the right professional.",
   },
   {
-    step: "৩",
-    title: "বুক করুন",
-    description: "সুবিধাজনক তারিখ-সময় দিয়ে বুকিং কনফার্ম করুন।",
+    step: "3",
+    title: "Book your slot",
+    description: "Choose a convenient date and time and confirm your request.",
   },
   {
-    step: "৪",
-    title: "কাজ শেষে পেমেন্ট",
+    step: "4",
+    title: "Pay after service",
     description:
-      "টেকনিশিয়ান কাজ সম্পন্ন করার পর নিরাপদে অনলাইনে পেমেন্ট করুন।",
+      "Complete a secure online payment after the technician completes the job.",
   },
 ];
 
@@ -82,13 +82,12 @@ export default function AboutPage() {
             <Wrench className="h-7 w-7" />
           </div>
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-            আমরা বাড়ির সমস্যাকে সহজ সমাধানে বদলে দিই
+            We make home support easier and more reliable
           </h1>
           <p className="text-muted-foreground text-lg">
-            FixItNow বাংলাদেশের একটি হোম সার্ভিস মার্কেটপ্লেস, যেখানে গ্রাহক ও
-            যাচাইকৃত টেকনিশিয়ানরা এক প্ল্যাটফর্মে যুক্ত হন — প্লাম্বিং,
-            ইলেকট্রিক্যাল, ক্লিনিং থেকে শুরু করে যেকোনো হোম রিপেয়ার সার্ভিসের
-            জন্য।
+            FixItNow brings customers and trusted specialists into one modern
+            home service platform — from plumbing and electrical work to
+            cleaning, repairs, and everyday home maintenance.
           </p>
         </div>
       </section>
@@ -96,22 +95,20 @@ export default function AboutPage() {
       {/* ================= MISSION ================= */}
       <section className="py-16">
         <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="text-2xl font-bold mb-4">আমাদের লক্ষ্য</h2>
+          <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
           <p className="text-muted-foreground leading-relaxed">
-            বাড়ির যেকোনো ছোটখাটো সমস্যায় নির্ভরযোগ্য টেকনিশিয়ান খুঁজে পাওয়া
-            সবসময় সহজ ছিল না — পরিচিত কাউকে জিজ্ঞেস করা, দরদাম করা, তারপরও
-            কাজের মান নিয়ে অনিশ্চয়তা। FixItNow এই পুরো অভিজ্ঞতাকে সহজ করে
-            দিয়েছে: যাচাইকৃত টেকনিশিয়ান, স্বচ্ছ মূল্য, আর অনলাইনে নিরাপদ বুকিং
-            ও পেমেন্ট — সব একই জায়গায়।
+            Finding a dependable professional for a small repair or urgent home
+            need should not be complicated. FixItNow removes the guesswork with
+            verified technicians, transparent prices, and secure online booking.
           </p>
         </div>
       </section>
 
       {/* ================= VALUES ================= */}
-      <section className="py-16 bg-muted/30 border-y">
+      <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-10">
-            আমাদের মূল্যবোধ
+            Our Standards
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((v) => (
@@ -134,9 +131,7 @@ export default function AboutPage() {
       {/* ================= HOW IT WORKS ================= */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-10">
-            কীভাবে কাজ করে
-          </h2>
+          <h2 className="text-2xl font-bold text-center mb-10">How It Works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {steps.map((s) => (
               <div key={s.step} className="relative p-6 rounded-2xl border">
@@ -158,11 +153,11 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 text-center space-y-5">
           <Users className="h-10 w-10 mx-auto" />
           <h2 className="text-2xl md:text-3xl font-bold">
-            আজই আপনার প্রয়োজনীয় টেকনিশিয়ান খুঁজে নিন
+            Find the right technician for your next home task
           </h2>
           <Link href="/services">
             <Button size="lg" variant="secondary" className="gap-1.5">
-              সার্ভিস দেখুন <ArrowRight className="h-4 w-4" />
+              Explore services <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>

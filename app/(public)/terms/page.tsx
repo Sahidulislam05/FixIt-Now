@@ -2,33 +2,33 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service | FixItNow",
-  description: "FixItNow প্ল্যাটফর্ম ব্যবহারের শর্তাবলী।",
+  description: "The terms for using the FixItNow platform.",
 };
 
 const sections = [
   {
-    title: "১. অ্যাকাউন্ট ব্যবহারের শর্ত",
-    body: "FixItNow ব্যবহার করতে হলে সঠিক ও হালনাগাদ তথ্য দিয়ে অ্যাকাউন্ট তৈরি করতে হবে। আপনার লগইন তথ্যের নিরাপত্তা বজায় রাখার দায়িত্ব সম্পূর্ণভাবে আপনার। সন্দেহজনক কার্যকলাপ লক্ষ্য করলে সাথে সাথে আমাদের জানান।",
+    title: "1. Account usage",
+    body: "To use FixItNow, customers and technicians must create an account with accurate and up-to-date information. Account credentials must be kept secure, and suspicious activity should be reported immediately.",
   },
   {
-    title: "২. বুকিং ও সার্ভিস",
-    body: "গ্রাহক একটি বুকিং রিকোয়েস্ট পাঠালে সংশ্লিষ্ট টেকনিশিয়ান তা গ্রহণ বা প্রত্যাখ্যান করতে পারেন। বুকিং কনফার্ম হওয়ার পর নির্ধারিত সময়ে সার্ভিস প্রদান করা টেকনিশিয়ানের দায়িত্ব। কোনো কারণে সার্ভিস বাতিল করতে হলে যত দ্রুত সম্ভব অপরপক্ষকে জানাতে হবে।",
+    title: "2. Booking and service",
+    body: "When a customer submits a booking request, the relevant technician may accept or decline it. Once confirmed, the technician is responsible for delivering the service at the agreed time and location.",
   },
   {
-    title: "৩. মূল্য ও পেমেন্ট",
-    body: "সার্ভিসের মূল্য বুকিংয়ের আগেই প্ল্যাটফর্মে প্রদর্শিত হয়। কাজ সম্পন্ন হওয়ার পর নির্ধারিত পেমেন্ট গেটওয়ের মাধ্যমে পেমেন্ট সম্পন্ন করতে হয়। মূল্য সংক্রান্ত কোনো বিরোধ দেখা দিলে FixItNow সাপোর্ট টিম সমাধানে সহায়তা করবে।",
+    title: "3. Pricing and payment",
+    body: "Pricing is shown before booking is confirmed. Payments are processed through approved payment gateways after service completion or as defined by the order workflow.",
   },
   {
-    title: "৪. টেকনিশিয়ানদের দায়িত্ব",
-    body: "টেকনিশিয়ান হিসেবে নিবন্ধন করার সময় প্রদত্ত স্কিল ও অভিজ্ঞতার তথ্য সঠিক হতে হবে। পেশাদারিত্ব বজায় রেখে নির্ধারিত সময়ে মানসম্পন্ন সার্ভিস প্রদান করা প্রত্যাশিত। বারবার সার্ভিস বাতিল বা গ্রাহকের অভিযোগের ভিত্তিতে অ্যাকাউন্ট পর্যালোচনার আওতায় আসতে পারে।",
+    title: "4. Technician responsibilities",
+    body: "Technicians must provide accurate skills and experience details and should maintain professional conduct and service quality. Repeated cancellations or complaints may trigger account review.",
   },
   {
-    title: "৫. দায়বদ্ধতার সীমা",
-    body: "FixItNow একটি মার্কেটপ্লেস প্ল্যাটফর্ম হিসেবে গ্রাহক ও টেকনিশিয়ানদের সংযুক্ত করে। সার্ভিসের প্রকৃত মান বা কাজের ফলাফল সংক্রান্ত সরাসরি দায়ভার সংশ্লিষ্ট টেকনিশিয়ানের, তবে গুরুতর সমস্যায় আমরা মধ্যস্থতায় সহায়তা করি।",
+    title: "5. Platform limitations",
+    body: "FixItNow connects customers and technicians as a marketplace. The assigned technician is directly responsible for service quality and field execution, while FixItNow may assist with dispute resolution when necessary.",
   },
   {
-    title: "৬. পরিবর্তন",
-    body: "প্রয়োজন অনুযায়ী এই শর্তাবলী পরিবর্তন করার অধিকার FixItNow সংরক্ষণ করে। উল্লেখযোগ্য কোনো পরিবর্তন হলে প্ল্যাটফর্মে জানিয়ে দেওয়া হবে।",
+    title: "6. Policy updates",
+    body: "FixItNow may update these terms from time to time. Changes will be announced through the platform when material.",
   },
 ];
 
@@ -39,7 +39,7 @@ export default function TermsPage() {
         Terms of Service
       </h1>
       <p className="text-sm text-muted-foreground mb-10">
-        সর্বশেষ আপডেট: জানুয়ারি ২০২৬
+        Last updated: January 2026
       </p>
 
       <div className="space-y-8">

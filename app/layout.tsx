@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Noto_Sans_Bengali } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/providers/providers";
@@ -7,9 +7,9 @@ import { SiteChrome } from "@/components/layout/site-chrome";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
-const notoBangla = Noto_Sans_Bengali({
-  subsets: ["bengali"],
-  variable: "--font-bangla",
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-heading",
 });
 
 const geistSans = Geist({
@@ -43,7 +43,7 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         inter.variable,
-        notoBangla.variable,
+        manrope.variable,
         "font-sans",
       )}
     >

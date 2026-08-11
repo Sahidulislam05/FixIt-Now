@@ -72,7 +72,7 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
     };
   }, [bookingId]);
 
-  // যদি এখনো ACCEPTED থাকে (webhook confirm এখনো আসেনি) এবং success ফ্লো হয়, কিছুক্ষণ পোল করো
+  // If the booking is still ACCEPTED and the gateway has not confirmed the webhook yet, poll briefly for a confirmation state.
   useEffect(() => {
     if (!bookingId || !booking) return;
     if (intent !== "success") return;
@@ -102,7 +102,7 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
     !!booking && booking.status === "ACCEPTED" && intent === "success";
 
   const copy: Copy = (() => {
-    // আসল বুকিং স্ট্যাটাস পাওয়া গেলে সেটাই সত্য — URL এর intent না
+    // If the live booking status can be verified, that response must drive the current outcome rather than the URL intent.
     if (verifiedPaid) {
       return {
         icon: <CheckCircle2 className="h-10 w-10" />,

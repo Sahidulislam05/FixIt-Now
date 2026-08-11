@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { GoogleIcon, FacebookIcon } from "@/components/shared/social-icons";
 
 function handleUnavailableProvider(provider: "Google" | "Facebook") {
-  toast.info(`${provider} লগইন শীঘ্রই আসছে — আপাতত ইমেইল দিয়ে চেষ্টা করো।`);
+  toast.info(
+    `${provider} sign-in is coming soon. Please try email login for now.`,
+  );
 }
 
 export function SocialLoginButtons() {

@@ -3,33 +3,33 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy | FixItNow",
   description:
-    "FixItNow প্ল্যাটফর্মে আপনার তথ্য কীভাবে সংগ্রহ ও ব্যবহার করা হয় তা জানুন।",
+    "Learn how FixItNow collects, stores, and uses information to support customer and technician services.",
 };
 
 const sections = [
   {
-    title: "১. আমরা যে তথ্য সংগ্রহ করি",
-    body: "অ্যাকাউন্ট তৈরির সময় আপনার নাম, ইমেইল, ফোন নম্বর এবং (টেকনিশিয়ানদের ক্ষেত্রে) স্কিল ও অভিজ্ঞতার তথ্য সংগ্রহ করা হয়। বুকিং ও পেমেন্টের সময় সংশ্লিষ্ট লেনদেনের তথ্যও সংরক্ষণ করা হয়, যা সার্ভিস প্রদানের জন্য প্রয়োজনীয়।",
+    title: "1. Information we collect",
+    body: "When you create an account, we collect your name, email address, phone number, and technician profile details such as skills and experience when applicable. Booking and payment information is also stored when needed to support service delivery.",
   },
   {
-    title: "২. তথ্যের ব্যবহার",
-    body: "সংগৃহীত তথ্য শুধুমাত্র বুকিং প্রক্রিয়াকরণ, গ্রাহক-টেকনিশিয়ান যোগাযোগ সহজ করা, পেমেন্ট নিশ্চিতকরণ এবং প্ল্যাটফর্মের নিরাপত্তা বজায় রাখতে ব্যবহার করা হয়। বিজ্ঞাপনের উদ্দেশ্যে আপনার তথ্য তৃতীয় পক্ষের কাছে বিক্রি করা হয় না।",
+    title: "2. How information is used",
+    body: "Collected information is used to process bookings, coordinate customer and technician communication, confirm payments, and maintain platform security. We do not sell personal information for advertising purposes.",
   },
   {
-    title: "৩. তথ্য শেয়ারিং",
-    body: "বুকিং কনফার্ম হওয়ার পর প্রয়োজনীয় যোগাযোগের তথ্য (নাম, ফোন নম্বর, ঠিকানা) শুধুমাত্র সংশ্লিষ্ট গ্রাহক ও টেকনিশিয়ানের মধ্যে শেয়ার করা হয়, যাতে সার্ভিস সমন্বয় করা যায়। পেমেন্ট প্রসেসিংয়ের জন্য নির্ভরযোগ্য পেমেন্ট গেটওয়ে (SSLCommerz) ব্যবহার করা হয়।",
+    title: "3. Information sharing",
+    body: "After a booking is confirmed, relevant contact information such as name, phone number, and address is shared only between the customer and the assigned technician to coordinate service delivery. Payment processing is handled through a secure gateway such as SSLCommerz.",
   },
   {
-    title: "৪. তথ্য সুরক্ষা",
-    body: "পাসওয়ার্ড এনক্রিপ্ট করে সংরক্ষণ করা হয় এবং অথেন্টিকেশনের জন্য secure token-based সিস্টেম ব্যবহার করা হয়। তবে ইন্টারনেটে কোনো তথ্য স্থানান্তরই ১০০% ঝুঁকিমুক্ত নয় — আমরা যুক্তিসঙ্গত নিরাপত্তা ব্যবস্থা বজায় রাখার চেষ্টা করি।",
+    title: "4. Data protection",
+    body: "Passwords are stored through secure hashing and authentication is handled through secure token-based systems. While internet transfer cannot be made completely risk-free, we implement practical safeguards to protect customer data.",
   },
   {
-    title: "৫. আপনার অধিকার",
-    body: "যেকোনো সময় আপনার প্রোফাইল থেকে ব্যক্তিগত তথ্য দেখতে ও আপডেট করতে পারবেন। অ্যাকাউন্ট বাতিল বা তথ্য মুছে ফেলার অনুরোধের জন্য আমাদের সাপোর্ট টিমের সাথে যোগাযোগ করুন।",
+    title: "5. Your rights",
+    body: "You can review and update your personal profile at any time. If you need to close your account or request data removal, contact our support team.",
   },
   {
-    title: "৬. যোগাযোগ",
-    body: "প্রাইভেসি সংক্রান্ত কোনো প্রশ্ন থাকলে support@fixitnow.com এ ইমেইল করুন।",
+    title: "6. Contact",
+    body: "If you have privacy questions, email support@fixitnow.com.",
   },
 ];
 
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
         Privacy Policy
       </h1>
       <p className="text-sm text-muted-foreground mb-10">
-        সর্বশেষ আপডেট: জানুয়ারি ২০২৬
+        Last updated: January 2026
       </p>
 
       <div className="space-y-8">
