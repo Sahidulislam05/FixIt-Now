@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useCategories } from "@/hooks/queries/use-categories";
 import { useServices } from "@/hooks/queries/use-services";
@@ -94,6 +95,12 @@ export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
+  const cardReveal = {
+    initial: { opacity: 0, y: 18 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, amount: 0.18 },
+  };
+
   // ============================================================
   // TanStack Query — এখন আর ম্যানুয়াল useState+useEffect+try/catch
   // লাগে না। ক্যাশিং, রিফেচ, রিভ্যালিডেশন, রেস-কন্ডিশন হ্যান্ডলিং —
@@ -159,7 +166,12 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* ================= HERO SECTION ================= */}
-      <section className="relative bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-24 border-b">
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        className="relative bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-24 border-b"
+      >
         <div className="container mx-auto px-4 text-center max-w-4xl space-y-6">
           <Badge
             variant="secondary"
@@ -219,10 +231,14 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= CATEGORIES SECTION ================= */}
-      <section className="py-12 bg-muted/30 border-b">
+      <motion.section
+        {...cardReveal}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        className="py-12 bg-muted/30 border-b"
+      >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -274,10 +290,14 @@ export default function HomePage() {
             )}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= FEATURED SERVICES ================= */}
-      <section className="py-16">
+      <motion.section
+        {...cardReveal}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="py-16"
+      >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -377,10 +397,14 @@ export default function HomePage() {
             )}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= TOP TECHNICIANS ================= */}
-      <section className="py-16 bg-muted/20 border-t border-b">
+      <motion.section
+        {...cardReveal}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="py-16 bg-muted/20 border-t border-b"
+      >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-10">
             <div>
@@ -473,10 +497,14 @@ export default function HomePage() {
             )}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= WHY CHOOSE US ================= */}
-      <section className="py-16">
+      <motion.section
+        {...cardReveal}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+        className="py-16"
+      >
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="p-6 space-y-3 rounded-2xl bg-primary/5 border border-primary/10">
@@ -513,10 +541,15 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= STATS (real dynamic counts) ================= */}
-      <section className="py-14 bg-primary text-primary-foreground">
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.2 }}
+        className="py-14 bg-primary text-primary-foreground"
+      >
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
@@ -574,10 +607,14 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= TESTIMONIALS ================= */}
-      <section className="py-16">
+      <motion.section
+        {...cardReveal}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="py-16"
+      >
         <div className="container mx-auto px-4">
           <div className="text-center max-w-xl mx-auto mb-12">
             <h2 className="text-3xl font-bold tracking-tight">
@@ -610,10 +647,15 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= FAQ ================= */}
-      <section id="faq" className="py-16 bg-muted/30 border-y scroll-mt-16">
+      <motion.section
+        {...cardReveal}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        id="faq"
+        className="py-16 bg-muted/30 border-y scroll-mt-16"
+      >
         <div className="container mx-auto px-4 max-w-3xl">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold tracking-tight">
@@ -641,10 +683,14 @@ export default function HomePage() {
             ))}
           </Accordion>
         </div>
-      </section>
+      </motion.section>
 
       {/* ================= NEWSLETTER + FINAL CTA ================= */}
-      <section className="py-16">
+      <motion.section
+        {...cardReveal}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+        className="py-16"
+      >
         <div className="container mx-auto px-4">
           <div className="rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div className="space-y-3">
@@ -716,7 +762,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }

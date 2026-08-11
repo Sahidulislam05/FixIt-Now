@@ -70,7 +70,6 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
       cancelled = true;
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
   // যদি এখনো ACCEPTED থাকে (webhook confirm এখনো আসেনি) এবং success ফ্লো হয়, কিছুক্ষণ পোল করো

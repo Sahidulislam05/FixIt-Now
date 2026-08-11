@@ -59,7 +59,6 @@ export default function CustomerPaymentsHistoryPage() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
 
     getMyPayments({ page, limit: PAGE_SIZE })
       .then((res) => {

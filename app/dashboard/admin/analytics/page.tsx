@@ -54,8 +54,9 @@ export default function AdminAnalyticsPage() {
     limit: 200,
   });
 
-  const bookings = bookingsData?.bookings ?? [];
-  const users = usersData?.users ?? [];
+  const bookings = useMemo(() => bookingsData?.bookings ?? [], [bookingsData]);
+
+  const users = useMemo(() => usersData?.users ?? [], [usersData]);
 
   const statusChartData = useMemo(() => {
     const counts = countBy(bookings.map((b) => b.status));

@@ -1,16 +1,17 @@
-import Link from "next/link";
-import { Calendar, User, ArrowRight } from "lucide-react";
+import { Calendar, User } from "lucide-react";
 
 export const metadata = {
   title: "Blog & Insights | FixitNow",
-  description: "Expert tips, maintenance guides, and home care advice from FixitNow.",
+  description:
+    "Expert tips, maintenance guides, and home care advice from FixitNow.",
 };
 
 const BLOG_POSTS = [
   {
     id: "1",
     title: "10 Essential AC Maintenance Tips Before Summer",
-    excerpt: "Keep your air conditioner running efficiently with these preventive maintenance steps.",
+    excerpt:
+      "Keep your air conditioner running efficiently with these preventive maintenance steps.",
     author: "Sahidul Islam",
     date: "Aug 02, 2026",
     category: "Appliance Care",
@@ -18,7 +19,8 @@ const BLOG_POSTS = [
   {
     id: "2",
     title: "How to Identify and Fix Common Plumbing Leaks",
-    excerpt: "Discover how early leak detection can save you thousands in water damage repairs.",
+    excerpt:
+      "Discover how early leak detection can save you thousands in water damage repairs.",
     author: "Tanvir Hossain",
     date: "Jul 28, 2026",
     category: "Plumbing",
@@ -26,7 +28,8 @@ const BLOG_POSTS = [
   {
     id: "3",
     title: "Electrical Safety Checklist for Modern Homes",
-    excerpt: "Ensure your home wiring and appliances meet standard safety guidelines.",
+    excerpt:
+      "Ensure your home wiring and appliances meet standard safety guidelines.",
     author: "Ayesha Rahman",
     date: "Jul 15, 2026",
     category: "Electrical",
@@ -41,7 +44,8 @@ export default function BlogPage() {
           FixitNow Knowledge Base
         </h1>
         <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Articles, guides, and technical advice to keep your home running smoothly.
+          Articles, guides, and technical advice to keep your home running
+          smoothly.
         </p>
       </div>
 
@@ -56,7 +60,9 @@ export default function BlogPage() {
                 {post.category}
               </span>
               <h2 className="text-xl font-bold line-clamp-2">{post.title}</h2>
-              <p className="text-sm text-muted-foreground line-clamp-3">{post.excerpt}</p>
+              <p className="text-sm text-muted-foreground line-clamp-3">
+                {post.excerpt}
+              </p>
             </div>
 
             <div className="pt-6 mt-6 border-t flex items-center justify-between text-xs text-muted-foreground">

@@ -36,7 +36,9 @@ export function ContactForm() {
     try {
       // Simulate server interaction
       await new Promise((resolve) => setTimeout(resolve, 1200));
-      toast.success("Message sent successfully! We will contact you shortly.");
+      toast.success(
+        `Message sent successfully for ${data.name}. We will contact you shortly.`,
+      );
       setIsSubmitted(true);
       reset();
     } catch {

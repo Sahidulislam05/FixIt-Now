@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/components/providers/providers";
 import { SiteChrome } from "@/components/layout/site-chrome";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+
+const notoBangla = Noto_Sans_Bengali({
+  subsets: ["bengali"],
+  variable: "--font-bangla",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,11 +42,12 @@ export default function RootLayout({
         "antialiased",
         geistSans.variable,
         geistMono.variable,
-        "font-sans",
         inter.variable,
+        notoBangla.variable,
+        "font-sans",
       )}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col font-sans">
         <Providers>
           <SiteChrome>{children}</SiteChrome>
         </Providers>
