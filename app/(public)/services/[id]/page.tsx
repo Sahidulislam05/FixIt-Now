@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { use } from "react";
 import Link from "next/link";
-import { getServiceById } from "@/lib/api/services";
-import { Service } from "@/lib/types";
+import { useService, useServices } from "@/hooks/queries/use-services";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,8 +14,10 @@ import {
   Clock,
   ShieldCheck,
   ArrowLeft,
+  ArrowRight,
   Calendar,
   Wrench,
+  MessageSquareText,
 } from "lucide-react";
 
 export default function ServiceDetailsPage({
@@ -25,17 +26,21 @@ export default function ServiceDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
-  const [service, setService] = useState<Service | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    getServiceById(resolvedParams.id)
-      .then((res) => {
-        setService(res.data.service);
-      })
-      .catch((err: Error) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [resolvedParams.id]);
+  // ============================================================
+  // TanStack Query — আগে useEffect+useState দিয়ে fetch হতো।
+  // এখন useService(id) নিজে ক্যাশ করে, একই সার্ভিস আবার ভিজিট করলে
+  // ইনস্ট্যান্ট লোড হয় (staleTime এর মধ্যে refetch হয় না)।
+  // ============================================================
+  const { data: service, isLoading: loading } = useService(resolvedParams.id);
+
+  // Related Services — একই ক্যাটাগরির অন্য সার্ভিস (নিজেরটা বাদে)
+  const { data: relatedData, isLoading: loadingRelated } = useServices(
+    service ? { categoryId: service.categoryId, limit: 4 } : {},
+  );
+  const relatedServices = (relatedData?.services ?? []).filter(
+    (s) => s.id !== resolvedParams.id,
+  );
 
   if (loading) {
     return (
@@ -58,6 +63,10 @@ export default function ServiceDetailsPage({
   }
 
   const tech = service.technician;
+  // getServiceById রেসপন্সে টেকনিশিয়ানের reviewsAsTechnician এমবেড করা
+  // থাকলে সেটা রিয়েল রিভিউ হিসেবে দেখানো হবে, নাহলে খালি-স্টেট দেখাবে —
+  // কোনো ডামি রিভিউ বসানো হয়নি।
+  const reviews = tech?.reviewsAsTechnician ?? [];
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-5xl space-y-8">
@@ -121,11 +130,94 @@ export default function ServiceDetailsPage({
               </div>
             </div>
           </div>
+
+          {/* ================= REVIEWS & RATINGS ================= */}
+          <Card className="p-6 space-y-4">
+            <h2 className="text-lg font-bold border-b pb-2 flex items-center gap-2">
+              <MessageSquareText className="h-4 w-4 text-primary" />
+              Reviews & Ratings
+            </h2>
+
+            {reviews.length > 0 ? (
+              <div className="space-y-4 divide-y">
+                {reviews.slice(0, 5).map((review) => (
+                  <div key={review.id} className="pt-4 first:pt-0 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">
+                        {review.customer?.name || "Verified Customer"}
+                      </span>
+                      <div className="flex items-center gap-0.5 text-amber-500">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-3.5 w-3.5 ${
+                              i < review.rating
+                                ? "fill-amber-500"
+                                : "fill-none text-muted-foreground/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-muted-foreground">
+                        {review.comment}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      {new Date(review.createdAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                এই টেকনিশিয়ানের জন্য এখনো কোনো রিভিউ জমা পড়েনি।
+              </p>
+            )}
+          </Card>
+
+          {/* ================= RELATED SERVICES ================= */}
+          {(loadingRelated || relatedServices.length > 0) && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-bold">
+                Related Services in {service.category?.name}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {loadingRelated
+                  ? Array.from({ length: 2 }).map((_, i) => (
+                      <Skeleton key={i} className="h-28 w-full rounded-xl" />
+                    ))
+                  : relatedServices.slice(0, 2).map((rs) => (
+                      <Link key={rs.id} href={`/services/${rs.id}`}>
+                        <Card className="p-4 h-full hover:border-primary/50 hover:shadow-sm transition-all">
+                          <h4 className="font-semibold text-sm line-clamp-1">
+                            {rs.title}
+                          </h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                            {rs.description || "Professional home service."}
+                          </p>
+                          <div className="flex items-center justify-between mt-3">
+                            <span className="text-primary font-bold text-sm">
+                              ৳{rs.price}
+                            </span>
+                            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                          </div>
+                        </Card>
+                      </Link>
+                    ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Technician Short Profile & Booking CTA */}
         <aside className="space-y-6">
-          <Card className="p-6 space-y-6 border-primary/30 shadow-md">
+          <Card className="p-6 space-y-6 border-primary/30 shadow-md sticky top-20">
             <div className="text-center space-y-3 border-b pb-6">
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
                 Service Price

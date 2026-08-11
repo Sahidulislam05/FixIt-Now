@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo, use } from "react";
+import { useState, useMemo, use } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { getTechnicianById } from "@/lib/api/technicians";
+import { useTechnician } from "@/hooks/queries/use-technicians";
 import { createBooking } from "@/lib/api/bookings";
 import { ApiError } from "@/lib/api/client";
-import { User, DayOfWeek } from "@/lib/types";
+import { DayOfWeek } from "@/lib/types";
 import { getAvatarUrl } from "@/lib/avatar";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,14 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Star, Calendar, UserCheck, Wrench, CalendarX2 } from "lucide-react";
+import {
+  Star,
+  Calendar,
+  UserCheck,
+  Wrench,
+  CalendarX2,
+  MessageSquareText,
+} from "lucide-react";
 import { toast } from "sonner";
 
 // JS-এর Date.getDay() (0=রবি...6=শনি) থেকে ব্যাকএন্ডের DayOfWeek enum-এ ম্যাপ করার জন্য
@@ -61,8 +68,13 @@ export default function TechnicianProfilePage({
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  const [tech, setTech] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // ============================================================
+  // TanStack Query — আগে useEffect+useState দিয়ে fetch হতো।
+  // এখন useTechnician(id) নিজে ক্যাশ করে; বুকিং সাবমিট করার পর কেউ
+  // আবার এই প্রোফাইলে ফিরলে (বা technician নিজের সার্ভিস আপডেট করলে)
+  // ক্যাশ invalidate হয়ে গেলে এই পেজও reload ছাড়াই আপডেট হবে।
+  // ============================================================
+  const { data: tech, isLoading: loading } = useTechnician(resolvedParams.id);
 
   // Booking Form State
   const [selectedServiceId, setSelectedServiceId] = useState(
@@ -76,18 +88,17 @@ export default function TechnicianProfilePage({
   const [manualTime, setManualTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    getTechnicianById(resolvedParams.id)
-      .then((res) => {
-        const data = res.data.technician;
-        setTech(data);
-        if (!preselectedServiceId && data.services?.length) {
-          setSelectedServiceId(data.services[0].id);
-        }
-      })
-      .catch((err: Error) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [resolvedParams.id, preselectedServiceId]);
+  // টেকনিশিয়ান ডেটা প্রথমবার এলে, preselected service না থাকলে প্রথম
+  // সার্ভিসটা ডিফল্ট বাছাই করা — render-time adjustment প্যাটার্ন
+  // ব্যবহার করা হয়েছে (useEffect+setState নয়), যাতে
+  // react-hooks/set-state-in-effect lint error না আসে।
+  const [prevTechId, setPrevTechId] = useState<string | undefined>(undefined);
+  if (tech && tech.id !== prevTechId) {
+    setPrevTechId(tech.id);
+    if (!preselectedServiceId && tech.services?.length) {
+      setSelectedServiceId(tech.services[0].id);
+    }
+  }
 
   // ============================================================
   // আগে এখানে একটা স্ট্যাটিক সময়সূচি (সব টেকনিশিয়ানের জন্য একই ৬টা স্লট)
@@ -103,7 +114,8 @@ export default function TechnicianProfilePage({
   const slotsForSelectedDate = useMemo(() => {
     if (!bookingDate || !tech) return [];
 
-    const dayEnum = DAY_INDEX_TO_ENUM[new Date(`${bookingDate}T00:00:00`).getDay()];
+    const dayEnum =
+      DAY_INDEX_TO_ENUM[new Date(`${bookingDate}T00:00:00`).getDay()];
     const daySchedule = tech.availabilities?.find(
       (a) => a.dayOfWeek === dayEnum && a.isActive,
     );
@@ -117,11 +129,14 @@ export default function TechnicianProfilePage({
   const isDayOff =
     hasAnyAvailability && !!bookingDate && slotsForSelectedDate.length === 0;
 
-  // তারিখ বদলালে আগের স্লট/ম্যানুয়াল-টাইম সিলেকশন আর বৈধ নাও থাকতে পারে
-  useEffect(() => {
+  // তারিখ বদলালে আগের স্লট/ম্যানুয়াল-টাইম সিলেকশন আর বৈধ নাও থাকতে পারে —
+  // render-time adjustment প্যাটার্ন, useEffect+setState নয়।
+  const [prevBookingDate, setPrevBookingDate] = useState(bookingDate);
+  if (bookingDate !== prevBookingDate) {
+    setPrevBookingDate(bookingDate);
     setSelectedSlot("");
     setManualTime("");
-  }, [bookingDate]);
+  }
 
   // চূড়ান্তভাবে বুকিং-এর সাথে যাওয়া সময় — হয় প্রিসেট স্লট থেকে, নাহলে
   // (কোনো schedule না থাকলে) ম্যানুয়াল টাইম-পিকার থেকে
@@ -190,6 +205,10 @@ export default function TechnicianProfilePage({
     (s) => s.id === selectedServiceId,
   );
 
+  // getTechnicianById রেসপন্সে reviewsAsTechnician এমবেড করা থাকলে রিয়েল
+  // রিভিউ দেখানো হবে, নাহলে খালি-স্টেট — কোনো ডামি রিভিউ বসানো হয়নি।
+  const reviews = tech.reviewsAsTechnician ?? [];
+
   return (
     <div className="container mx-auto px-4 py-10 max-w-6xl space-y-8">
       {/* Profile Header Card */}
@@ -234,6 +253,8 @@ export default function TechnicianProfilePage({
               <div>
                 {tech.technicianProfile?.experienceYears || 2}+ Years Experience
               </div>
+              <span>•</span>
+              <div>{reviews.length} Reviews</div>
             </div>
 
             {/* Skills */}
@@ -290,6 +311,56 @@ export default function TechnicianProfilePage({
                 </p>
               )}
             </div>
+          </Card>
+
+          {/* ================= REVIEWS & RATINGS ================= */}
+          <Card className="p-6 space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <MessageSquareText className="h-5 w-5 text-primary" /> Reviews &
+              Ratings
+            </h2>
+
+            {reviews.length > 0 ? (
+              <div className="space-y-4 divide-y">
+                {reviews.map((review) => (
+                  <div key={review.id} className="pt-4 first:pt-0 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">
+                        {review.customer?.name || "Verified Customer"}
+                      </span>
+                      <div className="flex items-center gap-0.5 text-amber-500">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-3.5 w-3.5 ${
+                              i < review.rating
+                                ? "fill-amber-500"
+                                : "fill-none text-muted-foreground/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-muted-foreground">
+                        {review.comment}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      {new Date(review.createdAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                এই টেকনিশিয়ানের জন্য এখনো কোনো রিভিউ জমা পড়েনি।
+              </p>
+            )}
           </Card>
         </div>
 
@@ -389,8 +460,8 @@ export default function TechnicianProfilePage({
                     <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
                       <CalendarX2 className="h-4 w-4 shrink-0 mt-0.5" />
                       <span>
-                        No fixed schedule set yet — pick your preferred time
-                        and the technician will confirm after reviewing your
+                        No fixed schedule set yet — pick your preferred time and
+                        the technician will confirm after reviewing your
                         request.
                       </span>
                     </div>

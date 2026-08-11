@@ -1,12 +1,12 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { getAllServices } from "@/lib/api/services";
-import { getAllCategories } from "@/lib/api/categories";
-import { Service, Category } from "@/lib/types";
+import { useServices } from "@/hooks/queries/use-services";
+import { useCategories } from "@/hooks/queries/use-categories";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import type { ServiceQuery } from "@/lib/api/services";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,13 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SimplePagination } from "@/components/shared/simple-pagination";
 import {
   Search,
@@ -22,9 +29,21 @@ import {
   X,
   ArrowRight,
   Wrench,
+  ArrowUpDown,
 } from "lucide-react";
 
 const PAGE_SIZE = 9;
+
+// ============================================================
+// সর্ট অপশন — value ফরম্যাট "sortBy:sortOrder", ServiceQuery-তে
+// পাঠানোর আগে split করে নেওয়া হয়। ব্যাকএন্ডের /api/services
+// এন্ডপয়েন্ট ইতিমধ্যে sortBy/sortOrder সাপোর্ট করে (lib/api/services.ts)।
+// ============================================================
+const SORT_OPTIONS = [
+  { value: "createdAt:desc", label: "Newest First" },
+  { value: "price:asc", label: "Price: Low to High" },
+  { value: "price:desc", label: "Price: High to Low" },
+];
 
 function ServicesPageContent() {
   const searchParams = useSearchParams();
@@ -39,12 +58,8 @@ function ServicesPageContent() {
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [sort, setSort] = useState(SORT_OPTIONS[0].value);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
-  const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // ইউজার টাইপ করা থামানোর পরই সার্চ/প্রাইস ফিল্টার কার্যকর হয় —
   // প্রতিটা কিস্ট্রোকে API কল হয় না, ফলে অ্যাপ দ্রুত মনে হয় এবং
@@ -53,62 +68,46 @@ function ServicesPageContent() {
   const debouncedMinPrice = useDebouncedValue(minPrice, 400);
   const debouncedMaxPrice = useDebouncedValue(maxPrice, 400);
 
-  // Fetch Categories
-  useEffect(() => {
-    getAllCategories()
-      .then((res) => setCategories(res.data.categories))
-      .catch((err: Error) => console.error(err));
-  }, []);
-
-  useEffect(() => {
+  // ফিল্টার/সর্ট বদলালে পেজ ১-এ ফিরে যাওয়া উচিত। useEffect+setState এর
+  // বদলে React-এর অফিসিয়াল "adjust state during render" প্যাটার্ন —
+  // এতে react-hooks/set-state-in-effect lint error এড়ানো যায় এবং একটা
+  // এক্সট্রা রি-রেন্ডার সাইকেলও বাঁচে।
+  const filterKey = `${debouncedSearch}|${selectedCategory}|${debouncedMinPrice}|${debouncedMaxPrice}|${sort}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
     setPage(1);
-  }, [debouncedSearch, selectedCategory, debouncedMinPrice, debouncedMaxPrice]);
+  }
 
-  // Fetch Services
-  useEffect(() => {
-    let cancelled = false;
+  const [sortBy, sortOrder] = sort.split(":") as [string, "asc" | "desc"];
 
-    const loadServices = async () => {
-      const query: Parameters<typeof getAllServices>[0] = {
-        page,
-        limit: PAGE_SIZE,
-      };
-      if (debouncedSearch) query.searchTerm = debouncedSearch;
-      if (selectedCategory) query.categoryId = selectedCategory;
-      if (debouncedMinPrice) query.minPrice = Number(debouncedMinPrice);
-      if (debouncedMaxPrice) query.maxPrice = Number(debouncedMaxPrice);
-
-      setLoading(true);
-      try {
-        const res = await getAllServices(query);
-        if (!cancelled) {
-          setServices(res.data);
-          setTotalPages(res.meta?.totalPages || 1);
-        }
-      } catch (err) {
-        if (!cancelled) console.error(err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    void loadServices();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    debouncedSearch,
-    selectedCategory,
-    debouncedMinPrice,
-    debouncedMaxPrice,
+  const query: ServiceQuery = {
     page,
-  ]);
+    limit: PAGE_SIZE,
+    sortBy,
+    sortOrder,
+  };
+  if (debouncedSearch) query.searchTerm = debouncedSearch;
+  if (selectedCategory) query.categoryId = selectedCategory;
+  if (debouncedMinPrice) query.minPrice = Number(debouncedMinPrice);
+  if (debouncedMaxPrice) query.maxPrice = Number(debouncedMaxPrice);
+
+  // ============================================================
+  // TanStack Query — filter/sort/page বদলালেই queryKey বদলে যায়
+  // (দেখো lib/query-keys.ts), হুক নিজে থেকে নতুন ডেটা fetch করে;
+  // আগের মতো useEffect+cancelled flag ম্যানেজ করা লাগছে না।
+  // ============================================================
+  const { data: categories = [] } = useCategories();
+  const { data: servicesData, isLoading: loading } = useServices(query);
+  const services = servicesData?.services ?? [];
+  const totalPages = servicesData?.meta?.totalPages || 1;
 
   const handleReset = () => {
     setSearch("");
     setSelectedCategory("");
     setMinPrice("");
     setMaxPrice("");
+    setSort(SORT_OPTIONS[0].value);
     setPage(1);
     router.push("/services");
   };
@@ -211,6 +210,33 @@ function ServicesPageContent() {
 
         {/* Services Grid Content */}
         <main className="lg:col-span-3 space-y-6">
+          {/* Result count + Sort */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm text-muted-foreground">
+              {loading
+                ? "Loading..."
+                : `${servicesData?.meta?.total ?? services.length} services found`}
+            </p>
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select value={sort} onValueChange={setSort}>
+                <SelectTrigger
+                  className="w-[190px] h-9"
+                  aria-label="Sort services"
+                >
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (

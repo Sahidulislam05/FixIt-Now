@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getAllCategories } from "@/lib/api/categories";
-import { getAllServices } from "@/lib/api/services";
-import { getAllTechnicians } from "@/lib/api/technicians";
-import { Category, Service, User } from "@/lib/types";
+import { useCategories } from "@/hooks/queries/use-categories";
+import { useServices } from "@/hooks/queries/use-services";
+import { useTechnicians } from "@/hooks/queries/use-technicians";
 import { getAvatarUrl, getCategoryIconUrl } from "@/lib/avatar";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { toast } from "sonner";
 
 import {
   Search,
@@ -25,42 +31,120 @@ import {
   Sparkles,
   Users,
   CheckCircle2,
+  Wrench,
+  FolderTree,
+  Mail,
+  Send,
+  Loader2,
+  Quote,
 } from "lucide-react";
+
+const TESTIMONIALS = [
+  {
+    name: "Rafiq Ahmed",
+    role: "গ্রাহক, ধানমন্ডি",
+    quote:
+      "রাত ১১টায় হঠাৎ পানির লাইন লিক হয়ে গিয়েছিল। FixItNow-এ বুক করার ৩০ মিনিটের মধ্যেই টেকনিশিয়ান চলে এসেছিলেন। খরচও আগেই স্পষ্ট জানা ছিল।",
+    rating: 5,
+  },
+  {
+    name: "Nusrat Jahan",
+    role: "গ্রাহক, উত্তরা",
+    quote:
+      "AC সার্ভিসিংয়ের জন্য বুক করেছিলাম। প্রোফাইলে রেটিং আর রিভিউ দেখে টেকনিশিয়ান বেছে নেওয়াটা সহজ হয়েছে, কাজও পরিপাটি হয়েছে।",
+    rating: 5,
+  },
+  {
+    name: "Kamal Hossain",
+    role: "টেকনিশিয়ান, ইলেকট্রিশিয়ান",
+    quote:
+      "একজন ইলেকট্রিশিয়ান হিসেবে এই প্ল্যাটফর্মে যুক্ত হওয়ার পর নিয়মিত বুকিং পাচ্ছি। পেমেন্টও সময়মতো অ্যাকাউন্টে চলে আসে।",
+    rating: 5,
+  },
+];
+
+const FAQS = [
+  {
+    q: "কীভাবে একটি সার্ভিস বুক করব?",
+    a: "প্রথমে Services পেজ থেকে আপনার প্রয়োজনীয় ক্যাটাগরি বা সার্চ দিয়ে সার্ভিস খুঁজুন, তারপর পছন্দের সার্ভিসে ক্লিক করে তারিখ-সময় দিয়ে বুকিং কনফার্ম করুন। বুকিংয়ের জন্য লগইন থাকা প্রয়োজন।",
+  },
+  {
+    q: "পেমেন্ট কখন করতে হয়?",
+    a: "টেকনিশিয়ান আপনার বুকিং রিকোয়েস্ট গ্রহণ করার পর এবং কাজ শেষ হওয়ার পর SSLCommerz-এর মাধ্যমে নিরাপদে অনলাইন পেমেন্ট করতে পারবেন। ড্যাশবোর্ডের 'My Bookings' থেকে পেমেন্ট স্ট্যাটাস দেখা যায়।",
+  },
+  {
+    q: "টেকনিশিয়ানরা কি যাচাইকৃত?",
+    a: "হ্যাঁ, প্রতিটি টেকনিশিয়ান নিবন্ধনের সময় স্কিল ও পরিচয় সংক্রান্ত তথ্য যাচাইয়ের মধ্য দিয়ে যান। গ্রাহকরা প্রতিটি প্রোফাইলে রেটিং ও রিভিউ দেখেও সিদ্ধান্ত নিতে পারেন।",
+  },
+  {
+    q: "বুকিং বাতিল করা যাবে কি?",
+    a: "সার্ভিস শুরু হওয়ার আগ পর্যন্ত ড্যাশবোর্ড থেকে বুকিং বাতিল করা যায়। বারবার বাতিল এড়াতে নির্ধারিত সময়ের আগেই সিদ্ধান্ত নেওয়ার পরামর্শ দেওয়া হয়।",
+  },
+  {
+    q: "কীভাবে টেকনিশিয়ান হিসেবে যুক্ত হব?",
+    a: "Register পেজ থেকে 'Technician' হিসেবে অ্যাকাউন্ট খুলুন, আপনার স্কিল ও অভিজ্ঞতার তথ্য দিন এবং প্রোফাইল সম্পন্ন করুন। এরপর ড্যাশবোর্ড থেকে সার্ভিস যুক্ত করে বুকিং গ্রহণ শুরু করতে পারবেন।",
+  },
+  {
+    q: "কোন এলাকায় সার্ভিস পাওয়া যায়?",
+    a: "বর্তমানে ঢাকা শহরের বিভিন্ন এলাকায় সক্রিয় টেকনিশিয়ানরা সার্ভিস দিচ্ছেন। প্রতিটি সার্ভিস লিস্টিংয়ে নির্দিষ্ট লোকেশন উল্লেখ থাকে, বুকিংয়ের আগে তা দেখে নিন।",
+  },
+];
 
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // States
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [technicians, setTechnicians] = useState<User[]>([]);
+  // ============================================================
+  // TanStack Query — এখন আর ম্যানুয়াল useState+useEffect+try/catch
+  // লাগে না। ক্যাশিং, রিফেচ, রিভ্যালিডেশন, রেস-কন্ডিশন হ্যান্ডলিং —
+  // সব হুক নিজে সামলায়। কোথাও নতুন service create/update/delete
+  // হলে queryKeys.services.all invalidate হয় (দেখো
+  // hooks/mutations/use-service-mutations.ts), তখন এই হোমপেজও
+  // reload ছাড়াই নিজে থেকে আপডেট হয়ে যাবে।
+  // ============================================================
+  const { data: categories = [], isLoading: loadingCategories } =
+    useCategories();
 
-  // Loading States
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [loadingServices, setLoadingServices] = useState(true);
-  const [loadingTechnicians, setLoadingTechnicians] = useState(true);
+  const { data: servicesData, isLoading: loadingServices } = useServices({
+    limit: 6,
+  });
+  const services = servicesData?.services ?? [];
 
-  // Data Fetching
-  useEffect(() => {
-    // 1. Fetch Categories
-    getAllCategories()
-      .then((res) => setCategories(res.data.categories))
-      .catch((err: Error) => console.error("Error loading categories:", err))
-      .finally(() => setLoadingCategories(false));
+  const { data: techniciansData, isLoading: loadingTechnicians } =
+    useTechnicians({ limit: 4 });
+  const technicians = techniciansData?.technicians ?? [];
 
-    // 2. Fetch Featured Services (limit 6)
-    getAllServices({ limit: 6 })
-      .then((res) => setServices(res.data))
-      .catch((err: Error) => console.error("Error loading services:", err))
-      .finally(() => setLoadingServices(false));
+  // ============================================================
+  // Newsletter ফর্ম — client-side validation + loading + success state।
+  // (এখনো কোনো newsletter API এন্ডপয়েন্ট নেই, তাই সাবমিট সিমুলেট করা
+  // হয়েছে — backend রেডি হলে শুধু handleNewsletterSubmit-এর ভেতরে
+  // আসল API কল বসিয়ে দিলেই হবে।)
+  // ============================================================
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterError, setNewsletterError] = useState("");
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
 
-    // 3. Fetch Top Technicians (limit 4)
-    getAllTechnicians({ limit: 4 })
-      .then((res) => setTechnicians(res.data))
-      .catch((err: Error) => console.error("Error loading technicians:", err))
-      .finally(() => setLoadingTechnicians(false));
-  }, []);
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newsletterEmail.trim();
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+
+    if (!trimmed) {
+      setNewsletterError("ইমেইল অ্যাড্রেস দিতে হবে");
+      return;
+    }
+    if (!isValidEmail) {
+      setNewsletterError("সঠিক ইমেইল অ্যাড্রেস দিন");
+      return;
+    }
+
+    setNewsletterError("");
+    setNewsletterLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    setNewsletterLoading(false);
+    setNewsletterEmail("");
+    toast.success("Subscribed! ধন্যবাদ, নতুন অফার আপডেট আপনার ইমেইলে যাবে।");
+  };
 
   // Handle Search Submission
   const handleSearch = (e: React.FormEvent) => {
@@ -391,7 +475,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ================= WHY CHOOSE US / STATS ================= */}
+      {/* ================= WHY CHOOSE US ================= */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
@@ -426,6 +510,209 @@ export default function HomePage() {
                 Pay via SSLCommerz after the technician accepts your booking
                 request.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= STATS (real dynamic counts) ================= */}
+      <section className="py-14 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="flex items-center justify-center gap-2 text-3xl md:text-4xl font-extrabold">
+                <Wrench className="h-7 w-7" />
+                {loadingServices ? (
+                  <Skeleton className="h-9 w-14 bg-primary-foreground/20" />
+                ) : (
+                  <span>{servicesData?.meta?.total ?? services.length}+</span>
+                )}
+              </div>
+              <p className="text-sm text-primary-foreground/80 mt-1">
+                Services Listed
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-center gap-2 text-3xl md:text-4xl font-extrabold">
+                <Users className="h-7 w-7" />
+                {loadingTechnicians ? (
+                  <Skeleton className="h-9 w-14 bg-primary-foreground/20" />
+                ) : (
+                  <span>
+                    {techniciansData?.meta?.total ?? technicians.length}+
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-primary-foreground/80 mt-1">
+                Verified Technicians
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-center gap-2 text-3xl md:text-4xl font-extrabold">
+                <FolderTree className="h-7 w-7" />
+                {loadingCategories ? (
+                  <Skeleton className="h-9 w-10 bg-primary-foreground/20" />
+                ) : (
+                  <span>{categories.length}+</span>
+                )}
+              </div>
+              <p className="text-sm text-primary-foreground/80 mt-1">
+                Service Categories
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-center gap-2 text-3xl md:text-4xl font-extrabold">
+                <Clock className="h-7 w-7" />
+                <span>24/7</span>
+              </div>
+              <p className="text-sm text-primary-foreground/80 mt-1">
+                Customer Support
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= TESTIMONIALS ================= */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <h2 className="text-3xl font-bold tracking-tight">
+              গ্রাহকরা যা বলছেন
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              হাজারো সন্তুষ্ট গ্রাহক ও টেকনিশিয়ানের অভিজ্ঞতা
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t) => (
+              <Card key={t.name} className="relative">
+                <CardContent className="p-6 space-y-4">
+                  <Quote className="h-7 w-7 text-primary/30" />
+                  <p className="text-sm text-foreground/90 leading-relaxed">
+                    {t.quote}
+                  </p>
+                  <div className="flex items-center gap-1 text-amber-500">
+                    {Array.from({ length: t.rating }).map((_, i) => (
+                      <Star key={i} className="h-3.5 w-3.5 fill-amber-500" />
+                    ))}
+                  </div>
+                  <div className="pt-2 border-t">
+                    <p className="font-semibold text-sm">{t.name}</p>
+                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= FAQ ================= */}
+      <section id="faq" className="py-16 bg-muted/30 border-y scroll-mt-16">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold tracking-tight">
+              সচরাচর জিজ্ঞাসিত প্রশ্ন
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              FixItNow সম্পর্কে আরও জানতে নিচের প্রশ্নগুলো দেখুন
+            </p>
+          </div>
+
+          <Accordion
+            type="single"
+            collapsible
+            className="bg-background rounded-xl border px-4"
+          >
+            {FAQS.map((faq, i) => (
+              <AccordionItem key={faq.q} value={`faq-${i}`}>
+                <AccordionTrigger className="text-left">
+                  {faq.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  {faq.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* ================= NEWSLETTER + FINAL CTA ================= */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="space-y-3">
+              <h2 className="text-2xl md:text-3xl font-bold">
+                নতুন অফার ও আপডেট পেতে সাবস্ক্রাইব করুন
+              </h2>
+              <p className="text-primary-foreground/85 text-sm md:text-base">
+                সিজনাল ডিসকাউন্ট, নতুন সার্ভিস ক্যাটাগরি আর প্ল্যাটফর্ম আপডেট
+                সবার আগে জানতে আপনার ইমেইল দিন।
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <form
+                onSubmit={handleNewsletterSubmit}
+                noValidate
+                className="flex flex-col sm:flex-row gap-2"
+              >
+                <div className="relative flex-1">
+                  <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-primary" />
+                  <Input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={newsletterEmail}
+                    onChange={(e) => {
+                      setNewsletterEmail(e.target.value);
+                      if (newsletterError) setNewsletterError("");
+                    }}
+                    aria-label="Email address"
+                    aria-invalid={!!newsletterError}
+                    disabled={newsletterLoading}
+                    className="pl-10 h-11 bg-background text-foreground border-0"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  size="lg"
+                  variant="secondary"
+                  disabled={newsletterLoading}
+                  className="h-11 font-semibold gap-1.5 shrink-0"
+                >
+                  {newsletterLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Subscribe <Send className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+              {newsletterError && (
+                <p className="text-xs text-red-100 bg-red-600/40 rounded px-3 py-1.5 w-max">
+                  {newsletterError}
+                </p>
+              )}
+
+              <Link href="/services" className="inline-block pt-1">
+                <Button
+                  variant="link"
+                  className="text-primary-foreground gap-1 px-0"
+                >
+                  অথবা এখনই সার্ভিস ব্রাউজ করুন{" "}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getAllBookings } from "@/lib/api/admin";
-import { Booking, BookingStatus } from "@/lib/types";
+import { useState } from "react";
+import { useAdminBookings } from "@/hooks/queries/use-admin";
+import { BookingStatus } from "@/lib/types";
+import { BOOKING_STATUS_OPTIONS } from "@/lib/booking-status";
 
 import { Input } from "@/components/ui/input";
 import {
@@ -24,97 +25,37 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SimplePagination } from "@/components/shared/simple-pagination";
+import { BookingStatusBadge } from "@/components/shared/booking-status-badge";
 import { Calendar, Search } from "lucide-react";
-import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
 
 export default function AdminBookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatus | "ALL">(
     "ALL",
   );
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
+  // স্ট্যাটাস ফিল্টার বদলালে পেজ ১-এ রিসেট — render-time adjustment প্যাটার্ন
+  const [prevStatusFilter, setPrevStatusFilter] = useState(statusFilter);
+  if (statusFilter !== prevStatusFilter) {
+    setPrevStatusFilter(statusFilter);
     setPage(1);
-  }, [statusFilter]);
+  }
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-
-    getAllBookings({
-      status: statusFilter === "ALL" ? undefined : statusFilter,
-      page,
-      limit: PAGE_SIZE,
-    })
-      .then((res) => {
-        if (cancelled) return;
-        setBookings(res.data);
-        setTotalPages(res.meta?.totalPages || 1);
-        setTotalCount(res.meta?.total ?? res.data.length);
-      })
-      .catch((err: Error) => {
-        console.error("Failed to fetch all bookings:", err);
-        if (!cancelled) toast.error("Failed to load platform bookings");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [statusFilter, page]);
-
-  // Status Badge Renderer
-  const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case "REQUESTED":
-        return (
-          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-            REQUESTED
-          </Badge>
-        );
-      case "ACCEPTED":
-        return (
-          <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20">
-            ACCEPTED
-          </Badge>
-        );
-      case "PAID":
-        return (
-          <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">
-            PAID
-          </Badge>
-        );
-      case "IN_PROGRESS":
-        return (
-          <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-            IN_PROGRESS
-          </Badge>
-        );
-      case "COMPLETED":
-        return (
-          <Badge className="bg-slate-500/10 text-slate-600 border-slate-500/20">
-            COMPLETED
-          </Badge>
-        );
-      case "CANCELLED":
-        return (
-          <Badge className="bg-red-500/10 text-red-600 border-red-500/20">
-            CANCELLED
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+  // ============================================================
+  // TanStack Query — filter/page বদলালেই queryKey বদলে যায়, হুক নিজে
+  // থেকে রিফেচ করে (queryKeys.bookings.admin, দেখো lib/query-keys.ts)।
+  // ============================================================
+  const { data, isLoading: loading } = useAdminBookings({
+    status: statusFilter === "ALL" ? undefined : statusFilter,
+    page,
+    limit: PAGE_SIZE,
+  });
+  const bookings = data?.bookings ?? [];
+  const totalPages = data?.meta?.totalPages || 1;
+  const totalCount = data?.meta?.total ?? bookings.length;
 
   // ব্যাকএন্ডের /api/admin/bookings এন্ডপয়েন্টে ফ্রি-টেক্সট সার্চ প্যারামিটার
   // নেই (শুধু status/page/limit) — তাই নাম-ভিত্তিক সার্চ শুধু বর্তমান পেজে
@@ -172,12 +113,11 @@ export default function AdminBookingsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="REQUESTED">REQUESTED</SelectItem>
-                <SelectItem value="ACCEPTED">ACCEPTED</SelectItem>
-                <SelectItem value="PAID">PAID</SelectItem>
-                <SelectItem value="IN_PROGRESS">IN_PROGRESS</SelectItem>
-                <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-                <SelectItem value="CANCELLED">CANCELLED</SelectItem>
+                {BOOKING_STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s.replace("_", " ")}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -219,7 +159,9 @@ export default function AdminBookingsPage() {
                         <TableCell className="font-bold text-primary">
                           ৳{b.totalPrice}
                         </TableCell>
-                        <TableCell>{renderStatusBadge(b.status)}</TableCell>
+                        <TableCell>
+                          <BookingStatusBadge status={b.status} />
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

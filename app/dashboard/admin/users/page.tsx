@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { getAllUsers, updateUserStatus } from "@/lib/api/admin";
-import { ApiError } from "@/lib/api/client";
-import { Role, User } from "@/lib/types";
+import { useAdminUsers } from "@/hooks/queries/use-admin";
+import { useUpdateUserStatus } from "@/hooks/mutations/use-admin-mutations";
+import { Role } from "@/lib/types";
 import { getAvatarUrl } from "@/lib/avatar";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
@@ -30,71 +30,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SimplePagination } from "@/components/shared/simple-pagination";
 import { Search, Ban, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
 
 const PAGE_SIZE = 10;
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "ALL">("ALL");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const debouncedSearch = useDebouncedValue(searchTerm, 400);
 
-  useEffect(() => {
+  // ফিল্টার বদলালে পেজ ১-এ রিসেট — render-time adjustment প্যাটার্ন
+  // (useEffect+setState নয়, react-hooks/set-state-in-effect lint rule এড়াতে)
+  const filterKey = `${debouncedSearch}|${roleFilter}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
     setPage(1);
-  }, [debouncedSearch, roleFilter]);
+  }
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await getAllUsers({
-        searchTerm: debouncedSearch || undefined,
-        role: roleFilter === "ALL" ? undefined : roleFilter,
-        page,
-        limit: PAGE_SIZE,
-      });
-      setUsers(res.data);
-      setTotalPages(res.meta?.totalPages || 1);
-      setTotalCount(res.meta?.total ?? res.data.length);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-      toast.error("Failed to load users list");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading: loading } = useAdminUsers({
+    searchTerm: debouncedSearch || undefined,
+    role: roleFilter === "ALL" ? undefined : roleFilter,
+    page,
+    limit: PAGE_SIZE,
+  });
+  const users = data?.users ?? [];
+  const totalPages = data?.meta?.totalPages || 1;
+  const totalCount = data?.meta?.total ?? users.length;
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => void fetchUsers(), 0);
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, roleFilter, page]);
-
-  // Ban / Unban Handler
-  const handleToggleBan = async (userId: string, isBanned: boolean) => {
-    setActionLoadingId(userId);
-    try {
-      await updateUserStatus(userId, isBanned ? "ACTIVE" : "BLOCKED");
-      toast.success(
-        isBanned ? "User unbanned successfully" : "User banned successfully",
-      );
-      void fetchUsers();
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof ApiError
-          ? error.message
-          : "Failed to update user status",
-      );
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
+  const updateStatus = useUpdateUserStatus();
 
   return (
     <div className="space-y-6">
@@ -217,12 +182,15 @@ export default function AdminUsersPage() {
                                   : "destructive"
                               }
                               className="gap-1 h-8 text-xs"
-                              disabled={actionLoadingId === u.id}
+                              disabled={updateStatus.isPending}
                               onClick={() =>
-                                handleToggleBan(
-                                  u.id,
-                                  u.activeStatus === "BLOCKED",
-                                )
+                                updateStatus.mutate({
+                                  userId: u.id,
+                                  activeStatus:
+                                    u.activeStatus === "BLOCKED"
+                                      ? "ACTIVE"
+                                      : "BLOCKED",
+                                })
                               }
                             >
                               {u.activeStatus === "BLOCKED" ? (

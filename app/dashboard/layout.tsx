@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { DashboardTopbar } from "@/components/layout/dashboard-topbar";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,8 +19,8 @@ import {
   Clock,
   Users,
   FolderTree,
+  BarChart3,
   LogOut,
-  Menu,
   X,
   ChevronRight,
   Home,
@@ -66,6 +67,11 @@ export default function DashboardLayout({
             label: "All Bookings",
             href: "/dashboard/admin/bookings",
             icon: Calendar,
+          },
+          {
+            label: "Analytics",
+            href: "/dashboard/admin/analytics",
+            icon: BarChart3,
           },
           {
             label: "Profile",
@@ -120,6 +126,11 @@ export default function DashboardLayout({
             label: "Payment History",
             href: "/dashboard/customer/payments",
             icon: CreditCard,
+          },
+          {
+            label: "Profile",
+            href: "/dashboard/customer/profile",
+            icon: User,
           },
         ];
     }
@@ -241,21 +252,9 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col">
-        {/* Top Header for Mobile */}
-        <header className="flex h-16 items-center justify-between border-b bg-background px-4 lg:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          <span className="font-semibold text-sm">Dashboard</span>
-          <Avatar className="h-8 w-8">
-            <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
-          </Avatar>
-        </header>
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Top Navbar — সব breakpoint-এ visible, profile dropdown সহ (req #7) */}
+        <DashboardTopbar onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Page Children */}
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">{children}</main>

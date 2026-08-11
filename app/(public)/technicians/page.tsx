@@ -1,59 +1,79 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getAllTechnicians } from "@/lib/api/technicians";
-import { User } from "@/lib/types";
+import { useTechnicians } from "@/hooks/queries/use-technicians";
 import { getAvatarUrl } from "@/lib/avatar";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import type { TechnicianQuery } from "@/lib/api/technicians";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SimplePagination } from "@/components/shared/simple-pagination";
-import { Star, Search, UserCheck } from "lucide-react";
+import { Star, Search, UserCheck, ArrowUpDown } from "lucide-react";
 
 const PAGE_SIZE = 9;
 
+// ============================================================
+// সর্ট অপশন — value ফরম্যাট "sortBy:sortOrder"। /api/technicians
+// এন্ডপয়েন্ট sortBy/sortOrder সাপোর্ট করে (lib/api/technicians.ts)।
+// "avgRating" TechnicianProfile রিলেশনের ফিল্ড — ব্যাকএন্ড nested sort
+// সাপোর্ট না করলে এটা ignore হয়ে ডিফল্ট অর্ডারে ফিরে আসবে, ক্র্যাশ
+// করবে না। ব্যাকএন্ডের প্রকৃত সাপোর্টেড sortBy ফিল্ড অনুযায়ী দরকার
+// হলে নিচের value গুলো বদলে নাও।
+// ============================================================
+const SORT_OPTIONS = [
+  { value: "createdAt:desc", label: "Newest First" },
+  { value: "avgRating:desc", label: "Top Rated" },
+  { value: "experienceYears:desc", label: "Most Experienced" },
+];
+
 export default function TechniciansPage() {
-  const [technicians, setTechnicians] = useState<User[]>([]);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState(SORT_OPTIONS[0].value);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
 
   const debouncedSearch = useDebouncedValue(search, 400);
 
-  useEffect(() => {
+  // ফিল্টার/সর্ট বদলালে পেজ ১-এ ফিরে যাওয়া উচিত — render-time adjustment
+  // প্যাটার্ন ব্যবহার করা হয়েছে, useEffect+setState নয় (দেখো Services
+  // পেজের একই কমেন্ট, কারণ যুক্তি অভিন্ন)।
+  const filterKey = `${debouncedSearch}|${sort}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
     setPage(1);
-  }, [debouncedSearch]);
+  }
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
+  const [sortBy, sortOrder] = sort.split(":") as [string, "asc" | "desc"];
 
-    getAllTechnicians({
-      searchTerm: debouncedSearch || undefined,
-      page,
-      limit: PAGE_SIZE,
-    })
-      .then((res) => {
-        if (cancelled) return;
-        setTechnicians(res.data);
-        setTotalPages(res.meta?.totalPages || 1);
-      })
-      .catch((err: Error) => console.error(err))
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+  const query: TechnicianQuery = {
+    page,
+    limit: PAGE_SIZE,
+    sortBy,
+    sortOrder,
+  };
+  if (debouncedSearch) query.searchTerm = debouncedSearch;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedSearch, page]);
+  // ============================================================
+  // TanStack Query — সার্চ/সর্ট/পেজ বদলালে queryKey বদলে যায়,
+  // হুক নিজে থেকে রিফেচ করে; keepPreviousData থাকায় পেজ বদলানোর
+  // সময় গ্রিড ফ্ল্যাশ করে না।
+  // ============================================================
+  const { data: techniciansData, isLoading: loading } = useTechnicians(query);
+  const technicians = techniciansData?.technicians ?? [];
+  const totalPages = techniciansData?.meta?.totalPages || 1;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8">
@@ -76,6 +96,33 @@ export default function TechniciansPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
+        </div>
+      </div>
+
+      {/* Result count + Sort */}
+      <div className="flex items-center justify-between gap-3 flex-wrap -mt-4">
+        <p className="text-sm text-muted-foreground">
+          {loading
+            ? "Loading..."
+            : `${techniciansData?.meta?.total ?? technicians.length} technicians found`}
+        </p>
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          <Select value={sort} onValueChange={setSort}>
+            <SelectTrigger
+              className="w-[190px] h-9"
+              aria-label="Sort technicians"
+            >
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
