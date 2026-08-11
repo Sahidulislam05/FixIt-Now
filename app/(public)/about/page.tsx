@@ -76,7 +76,7 @@ export default function AboutPage() {
   return (
     <div className="flex flex-col">
       {/* ================= HERO ================= */}
-      <section className="bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-20 border-b">
+      <section className="bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-20 ">
         <div className="container mx-auto px-4 max-w-3xl text-center space-y-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground mx-auto">
             <Wrench className="h-7 w-7" />
@@ -149,7 +149,7 @@ export default function AboutPage() {
       </section>
 
       {/* ================= CTA ================= */}
-      <section className="py-16 bg-primary text-primary-foreground">
+      <section className="py-16 bg-primary text-primary-foreground mb-16 rounded-xl">
         <div className="container mx-auto px-4 text-center space-y-5">
           <Users className="h-10 w-10 mx-auto" />
           <h2 className="text-2xl md:text-3xl font-bold">

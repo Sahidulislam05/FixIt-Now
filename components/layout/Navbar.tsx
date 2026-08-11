@@ -26,9 +26,9 @@ import {
 } from "lucide-react";
 
 const PUBLIC_LINKS = [
+  { href: "/about", label: "About" },
   { href: "/services", label: "Services" },
   { href: "/technicians", label: "Technicians" },
-  { href: "/about", label: "About" },
   { href: "/blog", label: "Blog" },
 ];
 
