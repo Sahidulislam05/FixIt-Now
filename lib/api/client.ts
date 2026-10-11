@@ -4,9 +4,13 @@ import { toast } from "sonner";
 import { clearAuthTokens, getAccessToken } from "../cookies";
 import type { ApiErrorIssue } from "../types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "https://fix-it-now-bd.vercel.app"
+)
+  .replace(/\/api\/?$/, "")
+  .replace(/\/$/, "");
 
-if (!API_BASE_URL && process.env.NODE_ENV !== "production") {
+if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV !== "production") {
   // শুধু dev-এ warning — build ভাঙবে না, কিন্তু ভুলে .env.local বসাতে ভুলে গেলে সাথে সাথে ধরা পড়বে
   console.warn("⚠️ NEXT_PUBLIC_API_URL সেট করা নেই — .env.local চেক করো");
 }
