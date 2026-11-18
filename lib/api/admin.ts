@@ -44,7 +44,6 @@ export function getAllBookings(query: AdminBookingQuery = {}) {
   });
 }
 
-// থিন alias — একই categoryService, শুধু /api/admin/categories path
 export function getAllCategoriesAdmin() {
   return apiRequest<ApiSuccessResponse<{ categories: Category[] }>>(
     "/api/admin/categories",

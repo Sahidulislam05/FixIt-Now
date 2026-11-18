@@ -1,93 +1,66 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Calendar, User } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
+import { Reveal } from "@/components/shared/reveal";
+import { ServiceCover } from "@/components/shared/service-card";
+import { BLOG_POSTS } from "@/lib/content/blog";
 
-export const metadata = {
-  title: "Blog & Insights | FixitNow",
-  description:
-    "Expert tips, maintenance guides, and home care advice from FixitNow.",
+export const metadata: Metadata = {
+  title: "Journal",
+  description: "Practical maintenance guides and home care advice from FixItNow technicians.",
 };
 
-const BLOG_POSTS = [
-  {
-    id: "1",
-    title: "10 Essential AC Maintenance Tips Before Summer",
-    excerpt:
-      "Keep your air conditioner running efficiently with these preventive maintenance steps.",
-    author: "Sahidul Islam",
-    date: "Aug 02, 2026",
-    category: "Appliance Care",
-  },
-  {
-    id: "2",
-    title: "How to Identify and Fix Common Plumbing Leaks",
-    excerpt:
-      "Discover how early leak detection can save you thousands in water damage repairs.",
-    author: "Tanvir Hossain",
-    date: "Jul 28, 2026",
-    category: "Plumbing",
-  },
-  {
-    id: "3",
-    title: "Electrical Safety Checklist for Modern Homes",
-    excerpt:
-      "Ensure your home wiring and appliances meet standard safety guidelines.",
-    author: "Ayesha Rahman",
-    date: "Jul 15, 2026",
-    category: "Electrical",
-  },
-];
-
 export default function BlogPage() {
-  return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
-      <div className="text-center space-y-3">
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-          FixitNow Knowledge Base
-        </h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Articles, guides, and technical advice to keep your home running
-          smoothly.
-        </p>
-      </div>
+  const [lead, ...rest] = BLOG_POSTS;
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {BLOG_POSTS.map((post) => (
-          <article
-            key={post.id}
-            className="flex flex-col justify-between border rounded-2xl bg-card p-6 shadow-sm hover:shadow-md transition-shadow"
+  return (
+    <main className="flex-1">
+      <PageHeader
+        eyebrow="Journal"
+        title={<>Notes from <em className="text-primary">the toolbox.</em></>}
+        description="Short, practical guides on keeping a home in working order — and knowing when to call someone."
+      />
+
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+        <Reveal>
+          <Link
+            href={`/blog/${lead.id}`}
+            className="group grid overflow-hidden rounded-xl border bg-card md:grid-cols-2"
           >
-            <div className="space-y-4">
-              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-primary/10 text-primary">
-                {post.category}
-              </span>
-              <h2 className="text-xl font-bold line-clamp-2">{post.title}</h2>
-              <p className="text-sm text-muted-foreground line-clamp-3">
-                {post.excerpt}
+            <ServiceCover category={lead.category} className="h-56 md:h-full" />
+            <div className="flex flex-col gap-4 p-8 md:p-10">
+              <p className="eyebrow !text-primary">
+                {lead.category} · {lead.readTime}
+              </p>
+              <h2 className="text-3xl font-semibold group-hover:underline md:text-4xl">{lead.title}</h2>
+              <p className="text-muted-foreground">{lead.excerpt}</p>
+              <p className="mt-auto flex items-center justify-between pt-6 font-mono text-xs text-muted-foreground">
+                {lead.author} · {lead.date}
+                <ArrowUpRight className="size-5 text-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </p>
             </div>
+          </Link>
+        </Reveal>
 
-            <div className="pt-6 mt-6 border-t flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center space-x-2">
-                <User className="w-3.5 h-3.5" />
-                <span>{post.author}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>{post.date}</span>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <Link
-                href={`/blog/${post.id}`}
-                className="inline-flex items-center text-sm font-semibold text-primary hover:underline"
-              >
-                Read article
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          {rest.map((post, i) => (
+            <Reveal key={post.id} delay={i * 0.08}>
+              <Link href={`/blog/${post.id}`} className="group lift flex h-full flex-col rounded-xl border bg-card p-8">
+                <p className="eyebrow !text-primary">
+                  {post.category} · {post.readTime}
+                </p>
+                <h2 className="mt-3 text-2xl font-semibold group-hover:underline">{post.title}</h2>
+                <p className="mt-3 text-muted-foreground">{post.excerpt}</p>
+                <p className="mt-auto flex items-center justify-between pt-8 font-mono text-xs text-muted-foreground">
+                  {post.author} · {post.date}
+                  <ArrowUpRight className="size-5 text-foreground" />
+                </p>
               </Link>
-            </div>
-          </article>
-        ))}
+            </Reveal>
+          ))}
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

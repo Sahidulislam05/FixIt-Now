@@ -1,11 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { SocialLoginButtons } from "@/components/forms/social-login-buttons";
 import { DemoLoginButtons } from "@/components/forms/demo-login-buttons";
+import { FormAlert } from "@/components/forms/form-alert";
 import { useLogin } from "@/hooks/use-auth";
 import { loginSchema, type LoginFormValues } from "@/lib/validations/auth";
 import { ApiError } from "@/lib/api/client";
@@ -27,64 +28,50 @@ import { ApiError } from "@/lib/api/client";
 export function LoginForm() {
   const login = useLogin();
   const searchParams = useSearchParams();
-  const justRegistered = searchParams.get("registered") === "true";
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [demoEmail, setDemoEmail] = useState<string | null>(null);
+
+  const notice =
+    searchParams.get("registered") === "true"
+      ? "Account created. Log in with your new details."
+      : searchParams.get("sessionExpired") === "true"
+        ? "Your session expired. Please log in again."
+        : null;
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
+    mode: "onTouched",
   });
 
   function onSubmit(values: LoginFormValues) {
+    setServerError(null);
     login.mutate(values, {
-      onSuccess: () => {
-        toast.success("Logged in successfully!");
-      },
+      onSuccess: () => toast.success("Welcome back!"),
       onError: (error) => {
-        const message =
-          error instanceof ApiError
-            ? error.message
-            : "Something went wrong. Please try again.";
-        toast.error(message);
+        setDemoEmail(null);
+        setServerError(
+          error instanceof ApiError ? error.message : "Something went wrong. Please try again.",
+        );
       },
     });
   }
 
-  // ডেমো বাটনে ক্লিক করলে ফর্ম ফিল হয়ে সাথে সাথে সাবমিটও হয়ে যায় —
-  // একই validation + error-handling পাইপলাইন দিয়ে যায় বলে আলাদা কোনো
-  // শর্টকাট লজিক লাগছে না।
   function handleDemoSelect(email: string, password: string) {
+    setDemoEmail(email);
     form.setValue("email", email, { shouldValidate: true });
     form.setValue("password", password, { shouldValidate: true });
-    form.handleSubmit(onSubmit)();
+    void form.handleSubmit(onSubmit)();
   }
 
+  const busy = login.isPending || login.isSuccess;
+
   return (
-    <div className="space-y-5">
-      {justRegistered && (
-        <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950 px-3 py-2.5 text-sm text-emerald-700 dark:text-emerald-400">
-          <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
-          <span>Account created successfully! Please log in below.</span>
-        </div>
-      )}
-
-      <DemoLoginButtons
-        onSelect={handleDemoSelect}
-        disabled={login.isPending}
-      />
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">
-            Or log in manually
-          </span>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <FormAlert tone={searchParams.get("registered") ? "success" : "info"} message={notice} />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-5">
           <FormField
             control={form.control}
             name="email"
@@ -92,12 +79,7 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    {...field}
-                  />
+                  <Input type="email" placeholder="you@example.com" autoComplete="email" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -111,32 +93,35 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <PasswordInput
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    {...field}
-                  />
+                  <PasswordInput placeholder="Your password" autoComplete="current-password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={login.isPending}>
-            {login.isPending ? "Logging in..." : "Log in"}
+          <FormAlert tone="error" message={serverError} />
+
+          <Button type="submit" size="lg" className="w-full" disabled={busy}>
+            {busy && !demoEmail ? (
+              <>
+                <Loader2 className="animate-spin" /> Logging in…
+              </>
+            ) : (
+              <>
+                Log in <ArrowRight />
+              </>
+            )}
           </Button>
         </form>
       </Form>
 
-      <SocialLoginButtons />
+      <DemoLoginButtons onSelect={handleDemoSelect} disabled={busy} pendingEmail={busy ? demoEmail : null} />
 
       <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/register"
-          className="font-medium text-primary hover:underline"
-        >
-          Register
+        New to FixItNow?{" "}
+        <Link href="/register" className="font-semibold text-foreground underline underline-offset-4 hover:text-primary">
+          Create an account
         </Link>
       </p>
     </div>

@@ -40,8 +40,6 @@ export default function AdminUsersPage() {
 
   const debouncedSearch = useDebouncedValue(searchTerm, 400);
 
-  // ফিল্টার বদলালে পেজ ১-এ রিসেট — render-time adjustment প্যাটার্ন
-  // (useEffect+setState নয়, react-hooks/set-state-in-effect lint rule এড়াতে)
   const filterKey = `${debouncedSearch}|${roleFilter}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (filterKey !== prevFilterKey) {
@@ -64,7 +62,7 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">User Management</h1>
+        <h1 className="text-3xl font-semibold md:text-4xl">User Management</h1>
         <p className="text-sm text-muted-foreground">
           View and manage all registered platform users
         </p>
@@ -163,11 +161,11 @@ export default function AdminUsersPage() {
                         </TableCell>
                         <TableCell>
                           {u.activeStatus === "BLOCKED" ? (
-                            <Badge className="bg-red-500/10 text-red-600 border-red-500/20">
+                            <Badge className="bg-destructive/10 text-destructive border-destructive/20">
                               BANNED
                             </Badge>
                           ) : (
-                            <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                            <Badge className="bg-success/10 text-success border-success/20">
                               ACTIVE
                             </Badge>
                           )}

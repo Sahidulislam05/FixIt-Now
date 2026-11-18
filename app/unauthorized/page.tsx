@@ -1,17 +1,23 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { StatusScreen } from "@/components/shared/status-screen";
 
 export default function UnauthorizedPage() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-24 text-center">
-      <h1 className="text-3xl font-semibold">403 — Access Denied.</h1>
-      <p className="max-w-md text-muted-foreground">
-        Your account does not have permission to view this page. If you arrived
-        here by mistake, use the button below to return home.
-      </p>
-      <Button asChild>
-        <Link href="/">Go to Home</Link>
-      </Button>
-    </div>
+    <StatusScreen
+      code="403"
+      title="This area isn't for your account"
+      description="You're signed in, but your role doesn't have access to this page. Switch accounts or head back."
+      actions={
+        <>
+          <Button asChild>
+            <Link href="/">Go home</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/login">Log in with another account</Link>
+          </Button>
+        </>
+      }
+    />
   );
 }

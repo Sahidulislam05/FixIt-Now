@@ -1,11 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  CalendarCheck,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  User,
+  X,
+} from "lucide-react";
+
 import { useAuth } from "@/hooks/use-auth";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,267 +26,244 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Wrench,
-  Search,
-  LayoutDashboard,
-  User,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { dashboardPathForRole, getInitials } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 const PUBLIC_LINKS = [
-  { href: "/about", label: "About" },
+  { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
   { href: "/technicians", label: "Technicians" },
-  { href: "/blog", label: "Blog" },
+  { href: "/about", label: "About" },
+  { href: "/blog", label: "Journal" },
+  { href: "/contact", label: "Contact" },
 ];
+
+function isActivePath(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
 
 export function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const getDashboardLink = () => {
-    if (!user) return "/dashboard/customer";
-    switch (user.role) {
-      case "ADMIN":
-        return "/dashboard/admin";
-      case "TECHNICIAN":
-        return "/dashboard/technician";
-      case "CUSTOMER":
-      default:
-        return "/dashboard/customer";
-    }
-  };
+  const dashboardHref = dashboardPathForRole(user?.role);
+  const links = isAuthenticated
+    ? [...PUBLIC_LINKS, { href: dashboardHref, label: "Dashboard" }]
+    : PUBLIC_LINKS;
 
-  const getInitials = (name?: string) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Brand Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-bold text-xl text-primary shrink-0"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Wrench className="h-5 w-5" />
-          </div>
-          <span>FixItNow</span>
-        </Link>
+    <header
+      id="top"
+      className={cn(
+        "sticky top-0 z-50 w-full border-b transition-[background-color,border-color,backdrop-filter] duration-300",
+        scrolled || open
+          ? "border-border bg-background/85 backdrop-blur-md"
+          : "border-transparent bg-background",
+      )}
+    >
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
+        <BrandMark />
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {PUBLIC_LINKS.map((link) => {
-            const isActive = pathname === link.href;
+        <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+          {links.map((link) => {
+            const active = isActivePath(pathname, link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition-colors hover:text-primary ${
-                  isActive ? "text-primary" : "text-foreground/80"
-                }`}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "relative rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
               >
                 {link.label}
+                {active && (
+                  <motion.span
+                    layoutId="nav-active"
+                    className="absolute inset-x-3 -bottom-[13px] h-[3px] rounded-full bg-primary"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
               </Link>
             );
           })}
-          {isAuthenticated && (
-            <Link
-              href={getDashboardLink()}
-              className={`transition-colors hover:text-primary ${
-                pathname?.startsWith("/dashboard")
-                  ? "text-primary"
-                  : "text-foreground/80"
-              }`}
-            >
-              Dashboard
-            </Link>
-          )}
         </nav>
 
-        {/* Right Actions */}
-        <div className="hidden md:flex items-center gap-2">
-          <Link href="/services">
-            <Button variant="ghost" size="icon" title="Search Services">
-              <Search className="h-5 w-5" />
-            </Button>
-          </Link>
-
+        <div className="hidden items-center gap-2 lg:flex">
           <ThemeToggle />
-
           {isAuthenticated && user ? (
-            /* ============= Profile Dropdown (Advanced Menu) ============= */
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-10 w-10 rounded-full ml-1"
+                <button
+                  className="flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-sm font-medium transition-colors hover:border-foreground/40"
+                  aria-label="Open account menu"
                 >
-                  <Avatar className="h-10 w-10 border">
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  <Avatar className="size-8">
+                    <AvatarFallback className="bg-deep text-xs text-deep-foreground">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
                   </Avatar>
-                </Button>
+                  <span className="max-w-[8rem] truncate">{user.name.split(" ")[0]}</span>
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent className="w-60" align="end">
                 <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {user.name}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                    <span className="inline-block mt-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-semibold w-max uppercase">
-                      {user.role}
-                    </span>
-                  </div>
+                  <p className="truncate text-sm font-semibold">{user.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  <p className="eyebrow mt-2 !text-primary">{user.role.toLowerCase()} account</p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link
-                    href={getDashboardLink()}
-                    className="cursor-pointer flex items-center"
-                  >
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
+                  <Link href={dashboardHref}>
+                    <LayoutDashboard /> Dashboard
                   </Link>
                 </DropdownMenuItem>
+                {user.role !== "ADMIN" && (
+                  <DropdownMenuItem asChild>
+                    <Link href={`${dashboardHref}/bookings`}>
+                      <CalendarCheck /> Bookings
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
-                  <Link
-                    href={`${getDashboardLink()}/profile`}
-                    className="cursor-pointer flex items-center"
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Profile Settings
+                  <Link href={`${dashboardHref}/profile`}>
+                    <User /> Profile settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={logout}
-                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
+                <DropdownMenuItem variant="destructive" onClick={logout}>
+                  <LogOut /> Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            /* Auth Buttons (Logged Out) */
-            <div className="flex items-center gap-2 ml-1">
-              <Link href="/login">
-                <Button variant="ghost">Log in</Button>
-              </Link>
-              <Link href="/register">
-                <Button>Get Started</Button>
-              </Link>
-            </div>
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/register">Book a technician</Link>
+              </Button>
+            </>
           )}
         </div>
 
-        {/* Mobile Menu Toggle Button */}
-        <div className="flex md:hidden items-center gap-1">
+        <div className="flex items-center gap-1 lg:hidden">
           <ThemeToggle />
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? "Close menu" : "Open menu"}
           >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </Button>
         </div>
       </div>
 
-      {/* Mobile Responsive Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-b bg-background px-4 py-4 space-y-4">
-          <nav className="flex flex-col space-y-3 font-medium text-sm">
-            {PUBLIC_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="hover:text-primary transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-            {isAuthenticated && (
-              <Link
-                href={getDashboardLink()}
-                onClick={() => setMobileMenuOpen(false)}
-                className="hover:text-primary transition-colors"
-              >
-                Dashboard
-              </Link>
-            )}
-          </nav>
-
-          <div className="pt-2 border-t">
-            {isAuthenticated && user ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col space-y-2 pt-2">
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            id="mobile-nav"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "calc(100dvh - 4rem)" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-y-auto border-t bg-background lg:hidden"
+          >
+            <nav aria-label="Mobile" className="flex flex-col px-4 py-6 sm:px-6">
+              {links.map((link, i) => (
+                <motion.div
+                  key={link.href}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.04 * i + 0.08 }}
+                >
                   <Link
-                    href={`${getDashboardLink()}/profile`}
-                    onClick={() => setMobileMenuOpen(false)}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "flex items-baseline justify-between border-b border-dashed py-4 font-display text-2xl",
+                      isActivePath(pathname, link.href) ? "text-primary" : "text-foreground",
+                    )}
                   >
-                    <Button variant="outline" className="w-full justify-start">
-                      <User className="mr-2 h-4 w-4" /> Profile Settings
-                    </Button>
+                    {link.label}
+                    <span className="font-mono text-xs text-muted-foreground">
+                      0{i + 1}
+                    </span>
                   </Link>
+                </motion.div>
+              ))}
+            </nav>
+
+            <div className="space-y-3 px-4 pb-10 sm:px-6">
+              {isAuthenticated && user ? (
+                <>
+                  <div className="flex items-center gap-3 rounded-xl border p-3">
+                    <Avatar className="size-10">
+                      <AvatarFallback className="bg-deep text-deep-foreground">
+                        {getInitials(user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{user.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href={`${dashboardHref}/profile`} onClick={() => setOpen(false)}>
+                      <User /> Profile settings
+                    </Link>
+                  </Button>
                   <Button
                     variant="destructive"
-                    className="w-full justify-start"
+                    className="w-full"
                     onClick={() => {
+                      setOpen(false);
                       logout();
-                      setMobileMenuOpen(false);
                     }}
                   >
-                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                    <LogOut /> Log out
+                  </Button>
+                </>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" asChild>
+                    <Link href="/login" onClick={() => setOpen(false)}>
+                      Log in
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/register" onClick={() => setOpen(false)}>
+                      Sign up
+                    </Link>
                   </Button>
                 </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    Log in
-                  </Button>
-                </Link>
-                <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full">Get Started</Button>
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

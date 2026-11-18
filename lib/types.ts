@@ -1,11 +1,3 @@
-// ============================================================
-// FixItNow ব্যাকএন্ডের ঠিক response shape অনুযায়ী টাইপ —
-// ৮টা Prisma entity + common API wrapper।
-//
-// ⚠️ গুরুত্বপূর্ণ: Prisma-র Decimal ফিল্ড (price, totalPrice, amount)
-// JSON-এ সবসময় STRING হয়ে সিরিয়ালাইজ হয়, number না। তাই ফর্মে/হিসাবে
-// ব্যবহারের আগে Number(service.price) করে নিতে হবে।
-// ============================================================
 
 export type Role = "CUSTOMER" | "TECHNICIAN" | "ADMIN";
 export type ActiveStatus = "ACTIVE" | "BLOCKED";
@@ -79,7 +71,7 @@ export interface Service {
     id: string;
     title: string;
     description: string | null;
-    price: string; // Decimal → string, দেখো উপরের নোট
+    price: string;
     location: string | null;
     isActive: boolean;
     technicianId: string;
@@ -144,7 +136,6 @@ export interface ApiMeta {
     totalPages: number;
 }
 
-// proxy.ts এ optimistic role-check এর জন্য JWT decode করতে লাগে
 export interface JwtPayload {
     id: string;
     name: string;

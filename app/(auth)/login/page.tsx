@@ -1,33 +1,35 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import type { Metadata } from "next";
 import { LoginForm } from "@/components/forms/login-form";
+import { AuthShell } from "@/components/layout/auth-shell";
+
+export const metadata: Metadata = {
+  title: "Log in",
+  description: "Log in to book a technician or manage your services.",
+};
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-1 items-center justify-center px-4 py-16">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <Link href="/" className="mb-2 text-lg font-semibold">
-            FixItNow 🔧
-          </Link>
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>
-            Log in to book a technician or manage your services.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={null}>
-            <LoginForm />
-          </Suspense>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthShell
+      eyebrow="Welcome back"
+      title={<>Log in to <em className="text-primary">FixItNow</em></>}
+      subtitle="Book a technician, follow a job, or manage your services."
+      aside={{
+        heading: (
+          <>
+            Every booking, <em className="text-highlight">one place.</em>
+          </>
+        ),
+        points: [
+          "See whether your request was accepted",
+          "Pay securely once a technician confirms",
+          "Rate the work when the job is done",
+        ],
+      }}
+    >
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
+    </AuthShell>
   );
 }

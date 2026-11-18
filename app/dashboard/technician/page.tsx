@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { StatCard } from "@/components/shared/stat-card";
+import { BookingStatusBadge } from "@/components/shared/booking-status-badge";
 import Link from "next/link";
 import { getTechnicianBookings } from "@/lib/api/bookings";
 import { getMyServices } from "@/lib/api/services";
@@ -9,7 +12,6 @@ import { Booking, Service, User } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CalendarClock,
@@ -45,8 +47,8 @@ export default function TechnicianOverviewPage() {
           setServices(servicesRes.data.services);
           setProfile(profileRes.data.profile);
         }
-      } catch (error) {
-        console.error("Failed to load technician overview:", error);
+      } catch {
+        if (!cancelled) toast.error("Failed to load your overview");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -91,84 +93,19 @@ export default function TechnicianOverviewPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Welcome back{profile?.name ? `, ${profile.name.split(" ")[0]}` : ""}{" "}
-          👋
+        <h1 className="text-3xl font-semibold md:text-4xl">
+          Your workshop
         </h1>
         <p className="text-sm text-muted-foreground">
-          Here&apos;s what&apos;s happening with your services today
+          Requests, upcoming jobs and earnings at a glance.
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending Requests
-            </CardTitle>
-            <Bell className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">
-              {pendingRequests.length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Awaiting your response
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Upcoming Jobs
-            </CardTitle>
-            <CalendarClock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {upcomingJobs.length}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Accepted, paid & in progress
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Earnings
-            </CardTitle>
-            <Wallet className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">
-              ৳{totalEarnings.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {completedJobs} jobs completed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Rating
-            </CardTitle>
-            <Star className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {techProfile?.avgRating ? techProfile.avgRating.toFixed(1) : "—"}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {techProfile?.totalReviews || 0} reviews
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="New requests" value={pendingRequests.length} icon={Bell} hint="Waiting for your answer" tone="primary" />
+        <StatCard label="Upcoming jobs" value={upcomingJobs.length} icon={CalendarClock} hint="Accepted, paid or in progress" />
+        <StatCard label="Earned" value={totalEarnings} prefix="৳" icon={Wallet} hint={`${completedJobs} jobs completed`} tone="deep" />
+        <StatCard label="Reviews" value={techProfile?.totalReviews ?? 0} icon={Star} hint={techProfile?.totalReviews ? `Average ${techProfile.avgRating.toFixed(1)} / 5` : "No ratings yet"} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -191,9 +128,7 @@ export default function TechnicianOverviewPage() {
                     {new Date(nextJob.scheduledDate).toLocaleString()}
                   </p>
                 </div>
-                <Badge className="w-max bg-blue-500/10 text-blue-600 border-blue-500/20">
-                  {nextJob.status}
-                </Badge>
+                <BookingStatusBadge status={nextJob.status} />
               </div>
             ) : (
               <p className="text-sm text-muted-foreground py-6 text-center">

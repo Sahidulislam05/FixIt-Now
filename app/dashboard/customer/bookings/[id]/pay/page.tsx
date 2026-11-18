@@ -47,8 +47,7 @@ export default function PayBookingPage({
       .then((res) => {
         if (!cancelled) setBooking(res.data.booking);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         if (!cancelled) toast.error("Failed to fetch booking details");
       })
       .finally(() => {
@@ -63,9 +62,6 @@ export default function PayBookingPage({
   const handlePayment = async () => {
     if (!booking) return;
 
-    // Defense-in-depth: শুধু ACCEPTED বুকিং-ই পে করা যাবে। ব্যাকএন্ডও এটা
-    // যাচাই করবেই, কিন্তু ফ্রন্টএন্ডেও আটকালে ইউজার বাজে এরর দেখার বদলে
-    // পরিষ্কার একটা বার্তা পায় এবং অপ্রয়োজনীয় নেটওয়ার্ক কলও এড়ানো যায়।
     if (booking.status !== "ACCEPTED") {
       toast.error(
         booking.status === "PAID" ||
@@ -86,9 +82,6 @@ export default function PayBookingPage({
       const gatewayUrl = res.data.gatewayPageURL;
 
       if (gatewayUrl) {
-        // পুরো পেজ রিডাইরেক্ট হয়ে যাচ্ছে বলে বাটনটা আনমাউন্ট হয়ে যাবে —
-        // lock রিসেট করার দরকার নেই, বরং রিসেট না করাই ভালো যাতে রিডাইরেক্ট
-        // হওয়ার আগে কোনোভাবে আবার ক্লিক করলেও দ্বিতীয় রিকোয়েস্ট না যায়।
         window.location.href = gatewayUrl;
       } else {
         toast.error("Failed to generate payment link");
@@ -139,7 +132,7 @@ export default function PayBookingPage({
       </Link>
 
       {notPayable && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700">
+        <div className="flex items-start gap-3 rounded-xl border border-primary/30 bg-highlight/10 p-4 text-sm text-primary">
           <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold">
@@ -147,9 +140,9 @@ export default function PayBookingPage({
                 ? "This booking is already paid."
                 : "This booking can no longer be paid."}
             </p>
-            <p className="text-amber-700/80">
+            <p className="text-primary/80">
               Current status:{" "}
-              <Badge variant="outline" className="border-amber-500/40">
+              <Badge variant="outline" className="border-primary/40">
                 {booking.status}
               </Badge>{" "}
               {alreadyPaid
@@ -164,7 +157,7 @@ export default function PayBookingPage({
         <CardHeader className="border-b bg-muted/30">
           <CardTitle className="text-xl flex items-center justify-between">
             <span>Payment Summary</span>
-            <ShieldCheck className="h-5 w-5 text-emerald-600" />
+            <ShieldCheck className="h-5 w-5 text-success" />
           </CardTitle>
         </CardHeader>
 
@@ -199,11 +192,11 @@ export default function PayBookingPage({
               <span className="text-xs text-muted-foreground uppercase font-semibold">
                 Total Payable Amount
               </span>
-              <p className="text-xs text-emerald-600">
+              <p className="text-xs text-success">
                 Includes all taxes & fees
               </p>
             </div>
-            <div className="text-3xl font-extrabold text-primary">
+            <div className="font-display text-4xl font-semibold text-primary">
               ৳{booking.totalPrice}
             </div>
           </div>
@@ -219,7 +212,7 @@ export default function PayBookingPage({
           ) : (
             <Button
               size="lg"
-              className="w-full font-bold gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full font-bold gap-2 bg-success text-success-foreground hover:bg-success/90"
               onClick={handlePayment}
               disabled={paying}
             >

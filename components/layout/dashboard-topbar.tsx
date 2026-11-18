@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Home, LogOut, Menu, User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -13,100 +14,62 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, User, LogOut, Home } from "lucide-react";
-import type { Role } from "@/lib/types";
+import { dashboardPathForRole, getInitials } from "@/lib/format";
 
-function dashboardProfilePath(role?: Role) {
-  if (role === "ADMIN") return "/dashboard/admin/profile";
-  if (role === "TECHNICIAN") return "/dashboard/technician/profile";
-  return "/dashboard/customer/profile";
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
-function getInitials(name?: string) {
-  if (!name) return "U";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
-interface DashboardTopbarProps {
-  onMenuClick: () => void;
-}
-
-export function DashboardTopbar({ onMenuClick }: DashboardTopbarProps) {
+export function DashboardTopbar({ onMenuClick }: { onMenuClick: () => void }) {
   const { user, logout } = useAuth();
+  const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background px-4 md:px-8">
-      <div className="flex items-center gap-3">
-        {/* মোবাইল/ট্যাবলেটে sidebar খোলার বাটন — lg-এ sidebar সবসময় visible তাই hidden */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          onClick={onMenuClick}
-        >
-          <Menu className="h-5 w-5" />
-          <span className="sr-only">Open sidebar</span>
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b bg-background/85 px-4 backdrop-blur-md md:px-8">
+      <div className="flex min-w-0 items-center gap-3">
+        <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick} aria-label="Open menu">
+          <Menu />
         </Button>
-
-        <div className="hidden sm:block">
-          <p className="text-sm font-semibold leading-none">
-            Welcome back, {user?.name?.split(" ")[0] || "there"} 👋
+        <div className="min-w-0">
+          <p className="truncate font-display text-lg leading-tight font-semibold">
+            {greeting()}, {user?.name?.split(" ")[0] ?? "there"}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Here&apos;s what&apos;s happening with your account today.
-          </p>
+          <p className="eyebrow hidden !text-[0.62rem] sm:block">{today}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <ThemeToggle />
-
-        {/* ================= Profile Dropdown Menu ================= */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-9 w-9 border">
-                <AvatarFallback>{getInitials(user?.name)}</AvatarFallback>
+            <button className="rounded-full ring-offset-2 transition-shadow focus-visible:ring-2 focus-visible:ring-ring" aria-label="Account menu">
+              <Avatar className="size-9">
+                <AvatarFallback className="bg-deep text-xs text-deep-foreground">{getInitials(user?.name)}</AvatarFallback>
               </Avatar>
-            </Button>
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuContent className="w-60" align="end">
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.name}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {user?.email}
-                </p>
-                <span className="inline-block mt-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-semibold w-max uppercase">
-                  {user?.role}
-                </span>
-              </div>
+              <p className="truncate text-sm font-semibold">{user?.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link
-                href={dashboardProfilePath(user?.role)}
-                className="cursor-pointer flex items-center"
-              >
-                <User className="mr-2 h-4 w-4" /> My Profile
+              <Link href={`${dashboardPathForRole(user?.role)}/profile`}>
+                <User /> My profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/" className="cursor-pointer flex items-center">
-                <Home className="mr-2 h-4 w-4" /> Back to Website
+              <Link href="/">
+                <Home /> Back to website
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={logout}
-              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
-            >
-              <LogOut className="mr-2 h-4 w-4" /> Log out
+            <DropdownMenuItem variant="destructive" onClick={logout}>
+              <LogOut /> Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

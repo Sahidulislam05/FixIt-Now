@@ -21,7 +21,6 @@ export interface BookingQuery {
     [key: string]: QueryValue;
 }
 
-// কাস্টমারের নিজের বুকিং
 export function getMyBookings(query: BookingQuery = {}) {
     return apiRequest<ApiSuccessResponse<Booking[]>>("/api/bookings", { query });
 }
@@ -37,12 +36,10 @@ export function cancelBooking(id: string, cancelReason?: string) {
     });
 }
 
-// টেকনিশিয়ানের নিজের বুকিং
 export function getTechnicianBookings(query: BookingQuery = {}) {
     return apiRequest<ApiSuccessResponse<Booking[]>>("/api/technician/bookings", { query });
 }
 
-// টেকনিশিয়ান manually শুধু এই status গুলোই সেট করতে পারে (PAID বাদে — ওটা payment.service থেকে auto)
 export type TechnicianSettableStatus = Extract<
     BookingStatus,
     "ACCEPTED" | "DECLINED" | "IN_PROGRESS" | "COMPLETED"

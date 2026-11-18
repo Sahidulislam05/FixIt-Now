@@ -38,7 +38,6 @@ const ROLE_COLORS: Record<Role, string> = {
   ADMIN: "var(--chart-4)",
 };
 
-// লাইভ ডেটা থেকে chart-friendly aggregation বানানোর ছোট হেল্পার
 function countBy<T extends string>(items: T[]): Record<string, number> {
   return items.reduce<Record<string, number>>((acc, key) => {
     acc[key] = (acc[key] ?? 0) + 1;
@@ -77,7 +76,6 @@ export default function AdminAnalyticsPage() {
   }, [users]);
 
   const trendChartData = useMemo(() => {
-    // শেষ ১৪ দিনের বুকিং সংখ্যা — dd/mm ফরম্যাটে গ্রুপ করা
     const days: { key: string; label: string }[] = Array.from({
       length: 14,
     }).map((_, i) => {
@@ -107,10 +105,9 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
+        <h1 className="text-3xl font-semibold md:text-4xl">Analytics</h1>
         <p className="text-sm text-muted-foreground">
-          বুকিং ও ইউজার ডেটার ভিজ্যুয়াল ব্রেকডাউন (সাম্প্রতিক {bookings.length}{" "}
-          বুকিং ভিত্তিক)
+          Booking and user breakdown, based on the latest {bookings.length} bookings.
         </p>
       </div>
 
@@ -128,7 +125,7 @@ export default function AdminAnalyticsPage() {
               <Skeleton className="h-64 w-full" />
             ) : statusChartData.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-16">
-                এখনো কোনো বুকিং রেকর্ড নেই।
+                No bookings recorded yet.
               </p>
             ) : (
               <ResponsiveContainer width="100%" height={260}>

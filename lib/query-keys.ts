@@ -38,5 +38,9 @@ export const queryKeys = {
     mine: ["payments", "mine"] as const,
   },
 
+  reviews: {
+    recent: (limit: number) => ["reviews", "recent", limit] as const,
+  },
+
   me: ["me"] as const,
 } as const;

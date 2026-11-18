@@ -1,70 +1,61 @@
+import type { Metadata } from "next";
+import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { ContactForm } from "@/components/forms/contact-form";
-import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { PageHeader } from "@/components/shared/page-header";
+import { Reveal } from "@/components/shared/reveal";
 
-export const metadata = {
-  title: "Contact Us | FixitNow",
-  description: "Get in touch with FixitNow support team for inquiries and assistance.",
+export const metadata: Metadata = {
+  title: "Contact",
+  description: "Questions about a booking or joining as a technician? Get in touch with FixItNow support.",
 };
+
+const CHANNELS = [
+  { icon: Phone, label: "Call us", value: "+880 1700-000000", href: "tel:+8801700000000" },
+  { icon: Mail, label: "Email", value: "support@fixitnow.com", href: "mailto:support@fixitnow.com" },
+  { icon: MapPin, label: "Office", value: "Level 5, Gulshan-2, Dhaka 1212" },
+  { icon: Clock, label: "Hours", value: "Every day, 8 am – 10 pm" },
+];
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
-      <div className="text-center space-y-3">
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-          Get in Touch
-        </h1>
-        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-          Have questions or need assistance with your booking? Our dedicated team is here to help you 24/7.
-        </p>
-      </div>
+    <main className="flex-1">
+      <PageHeader
+        eyebrow="Contact"
+        title={<>Talk to a <em className="text-primary">person.</em></>}
+        description="Booking question, payment problem, or thinking of joining as a technician — write to us and we'll reply within a working day."
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-        {/* Contact Info */}
-        <div className="space-y-8 p-8 border rounded-2xl bg-card shadow-sm">
-          <h2 className="text-2xl font-bold">Contact Information</h2>
-          <div className="space-y-6">
-            <div className="flex items-start space-x-4">
-              <MapPin className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold">Headquarters</h4>
-                <p className="text-sm text-muted-foreground">
-                  Level 5, Tech Hub Tower, Gulshan-2, Dhaka 1212, Bangladesh
-                </p>
-              </div>
-            </div>
+      <section className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_1.6fr] lg:py-20">
+        <Reveal>
+          <ul className="divide-y rounded-xl border bg-card">
+            {CHANNELS.map((channel) => (
+              <li key={channel.label} className="flex items-start gap-4 p-5">
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-deep text-deep-foreground">
+                  <channel.icon className="size-4" />
+                </span>
+                <div>
+                  <p className="eyebrow">{channel.label}</p>
+                  {channel.href ? (
+                    <a href={channel.href} className="link-grow mt-1 inline-block font-medium">
+                      {channel.value}
+                    </a>
+                  ) : (
+                    <p className="mt-1 font-medium">{channel.value}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
 
-            <div className="flex items-start space-x-4">
-              <Phone className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold">Phone Support</h4>
-                <p className="text-sm text-muted-foreground">+880 1700-000000</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <Mail className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold">Email Us</h4>
-                <p className="text-sm text-muted-foreground">support@fixitnow.com</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <Clock className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold">Working Hours</h4>
-                <p className="text-sm text-muted-foreground">Monday – Sunday: 8:00 AM – 10:00 PM</p>
-              </div>
-            </div>
+        <Reveal delay={0.1}>
+          <div className="rounded-xl border bg-card p-6 shadow-[6px_6px_0_0_var(--foreground)] sm:p-8">
+            <h2 className="text-2xl font-semibold">Send us a message</h2>
+            <p className="mt-1 mb-6 text-sm text-muted-foreground">All fields are required.</p>
+            <ContactForm />
           </div>
-        </div>
-
-        {/* Contact Form */}
-        <div className="p-8 border rounded-2xl bg-card shadow-sm">
-          <h2 className="text-2xl font-bold mb-6">Send Us a Message</h2>
-          <ContactForm />
-        </div>
-      </div>
-    </div>
+        </Reveal>
+      </section>
+    </main>
   );
 }

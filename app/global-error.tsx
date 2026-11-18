@@ -1,18 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-
-export default function GlobalError({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
-  useEffect(() => {
-    console.error("Root layout error:", error);
-  }, [error]);
-
+export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <html lang="en">
       <body>
@@ -24,7 +12,9 @@ export default function GlobalError({
             justifyContent: "center",
             flexDirection: "column",
             gap: "1rem",
-            fontFamily: "system-ui, sans-serif",
+            fontFamily: "Georgia, serif",
+            background: "#f7f4ee",
+            color: "#2b2622",
             padding: "1.5rem",
             textAlign: "center",
           }}
@@ -41,7 +31,7 @@ export default function GlobalError({
             style={{
               padding: "0.6rem 1.4rem",
               borderRadius: "0.5rem",
-              background: "#16a34a",
+              background: "#c2581f",
               color: "#fff",
               fontWeight: 600,
               border: "none",

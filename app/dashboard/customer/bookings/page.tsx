@@ -1,15 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  CalendarSearch,
+  CreditCard,
+  MessageSquare,
+  Star,
+  XCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+
 import { cancelBooking, getMyBookings } from "@/lib/api/bookings";
 import { createReview } from "@/lib/api/reviews";
 import { ApiError } from "@/lib/api/client";
-import { Booking } from "@/lib/types";
+import { formatBookingStatus } from "@/lib/booking-status";
+import { formatTaka } from "@/lib/format";
+import type { Booking, BookingStatus } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -18,263 +37,233 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
+import { BookingStatusBadge } from "@/components/shared/booking-status-badge";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { SimplePagination } from "@/components/shared/simple-pagination";
-import {
-  Star,
-  CreditCard,
-  XCircle,
-  MessageSquare,
-  Calendar,
-} from "lucide-react";
-import { toast } from "sonner";
+import { ReviewForm } from "@/components/forms/review-form";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 10;
+const CANCELLABLE: BookingStatus[] = ["REQUESTED", "ACCEPTED", "PAID"];
+const FILTERS: ("ALL" | BookingStatus)[] = [
+  "ALL",
+  "REQUESTED",
+  "ACCEPTED",
+  "PAID",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
+];
+
+function formatWhen(iso: string) {
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function CustomerBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("ALL");
 
-  // Review Modal State
-  const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
-  const [rating, setRating] = useState<number>(5);
-  const [comment, setComment] = useState<string>("");
-  const [submittingReview, setSubmittingReview] = useState(false);
+  const [toCancel, setToCancel] = useState<Booking | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
 
-  // Fetch Bookings
+  const [toReview, setToReview] = useState<Booking | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
-
-    const loadBookings = async () => {
-      try {
-        setLoading(true);
-        const res = await getMyBookings({ page, limit: PAGE_SIZE });
-        if (!cancelled) {
-          setBookings(res.data);
-          setTotalPages(res.meta?.totalPages || 1);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to fetch bookings:", error);
-          toast.error("Failed to load bookings");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    void loadBookings();
+    getMyBookings({
+      page,
+      limit: PAGE_SIZE,
+      status: filter === "ALL" ? undefined : filter,
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setBookings(res.data);
+        setTotalPages(res.meta?.totalPages || 1);
+      })
+      .catch(() => !cancelled && toast.error("Failed to load your bookings"))
+      .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [page]);
+  }, [page, filter, reloadKey]);
 
-  const refreshBookings = async () => {
-    const res = await getMyBookings({ page, limit: PAGE_SIZE });
-    setBookings(res.data);
-    setTotalPages(res.meta?.totalPages || 1);
-  };
+  function reload() {
+    setLoading(true);
+    setReloadKey((k) => k + 1);
+  }
 
-  // Handle Cancel Booking
-  const handleCancelBooking = async (id: string) => {
-    if (!confirm("Are you sure you want to cancel this booking?")) return;
-
+  async function confirmCancel() {
+    if (!toCancel) return;
+    setCancelling(true);
     try {
-      await cancelBooking(id);
-      toast.success("Booking cancelled successfully");
-      await refreshBookings();
-    } catch (error: unknown) {
+      await cancelBooking(toCancel.id, cancelReason.trim() || undefined);
+      toast.success("Booking cancelled");
+      setToCancel(null);
+      setCancelReason("");
+      reload();
+    } catch (error) {
       toast.error(
-        error instanceof ApiError ? error.message : "Failed to cancel booking",
-      );
-    }
-  };
-
-  // Handle Submit Review
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!reviewBooking) return;
-
-    setSubmittingReview(true);
-    try {
-      await createReview({
-        bookingId: reviewBooking.id,
-        rating,
-        comment,
-      });
-
-      toast.success("Review submitted successfully!");
-      setReviewBooking(null);
-      setComment("");
-      setRating(5);
-      await refreshBookings();
-    } catch (error: unknown) {
-      toast.error(
-        error instanceof ApiError ? error.message : "Failed to submit review",
+        error instanceof ApiError
+          ? error.message
+          : "Couldn't cancel the booking",
       );
     } finally {
-      setSubmittingReview(false);
+      setCancelling(false);
     }
-  };
+  }
 
-  // Status Badge Helper
-  const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case "REQUESTED":
-        return (
-          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20">
-            REQUESTED
-          </Badge>
-        );
-      case "ACCEPTED":
-        return (
-          <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20">
-            ACCEPTED
-          </Badge>
-        );
-      case "PAID":
-        return (
-          <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20">
-            PAID
-          </Badge>
-        );
-      case "IN_PROGRESS":
-        return (
-          <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20">
-            IN_PROGRESS
-          </Badge>
-        );
-      case "COMPLETED":
-        return (
-          <Badge className="bg-slate-500/10 text-slate-600 border-slate-500/20 hover:bg-slate-500/20">
-            COMPLETED
-          </Badge>
-        );
-      case "CANCELLED":
-        return (
-          <Badge className="bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20">
-            CANCELLED
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+  async function submitReview(values: { rating: number; comment: string }) {
+    if (!toReview) return;
+    setReviewing(true);
+    setReviewError(null);
+    try {
+      await createReview({ bookingId: toReview.id, ...values });
+      toast.success("Thanks for the review!");
+      setToReview(null);
+      reload();
+    } catch (error) {
+      setReviewError(
+        error instanceof ApiError ? error.message : "Couldn't post your review",
+      );
+    } finally {
+      setReviewing(false);
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Bookings</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage and track your service booking requests
-          </p>
-        </div>
+      <div>
+        <p className="eyebrow">Customer</p>
+        <h1 className="mt-1 text-3xl font-semibold md:text-4xl">My bookings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Pay for accepted jobs, cancel before work starts, and review finished
+          ones.
+        </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-primary" /> Booking History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : bookings.length > 0 ? (
-            <>
+      <div
+        className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
+        role="tablist"
+        aria-label="Filter by status"
+      >
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            role="tab"
+            aria-selected={filter === f}
+            onClick={() => {
+              if (f === filter) return;
+              setLoading(true);
+              setFilter(f);
+              setPage(1);
+            }}
+            className={cn(
+              "shrink-0 rounded-full border px-3.5 py-1.5 text-sm whitespace-nowrap transition-colors",
+              filter === f
+                ? "border-foreground bg-foreground text-background"
+                : "bg-card hover:border-foreground/40",
+            )}
+          >
+            {f === "ALL" ? "All" : formatBookingStatus(f)}
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-xl border bg-card p-5">
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        ) : bookings.length > 0 ? (
+          <>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Service</TableHead>
                     <TableHead>Technician</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Amount</TableHead>
+                    <TableHead>When</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {bookings.map((booking) => (
-                    <TableRow key={booking.id}>
-                      <TableCell className="font-semibold">
-                        {booking.service?.title || "Service"}
+                    <TableRow key={booking.id} className="animate-rise">
+                      <TableCell className="max-w-[220px]">
+                        <Link
+                          href={`/services/${booking.serviceId}`}
+                          className="block truncate font-semibold hover:underline"
+                        >
+                          {booking.service?.title ?? "Service"}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{booking.technician?.name ?? "—"}</TableCell>
+                      <TableCell className="font-mono text-xs whitespace-nowrap">
+                        {formatWhen(booking.scheduledDate)}
+                      </TableCell>
+                      <TableCell className="text-right font-display text-base font-semibold">
+                        {formatTaka(booking.totalPrice)}
                       </TableCell>
                       <TableCell>
-                        {booking.technician?.name || "Technician"}
+                        <BookingStatusBadge status={booking.status} />
                       </TableCell>
-                      <TableCell className="text-xs">
-                        {new Date(booking.scheduledDate).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="font-bold text-primary">
-                        ৳{booking.totalPrice}
-                      </TableCell>
-                      <TableCell>{renderStatusBadge(booking.status)}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        {/* ACCEPTED Action: Pay Now */}
-                        {booking.status === "ACCEPTED" && (
-                          <Link
-                            href={`/dashboard/customer/bookings/${booking.id}/pay`}
-                          >
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          {booking.status === "ACCEPTED" && (
+                            <Button size="sm" asChild>
+                              <Link
+                                href={`/dashboard/customer/bookings/${booking.id}/pay`}
+                              >
+                                <CreditCard /> Pay now
+                              </Link>
+                            </Button>
+                          )}
+                          {booking.status === "COMPLETED" &&
+                            (booking.review ? (
+                              <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground">
+                                <Star className="size-3.5 fill-highlight text-highlight" />
+                                {booking.review.rating}/5
+                              </span>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ink"
+                                onClick={() => {
+                                  setReviewError(null);
+                                  setToReview(booking);
+                                }}
+                              >
+                                <MessageSquare /> Review
+                              </Button>
+                            ))}
+                          {CANCELLABLE.includes(booking.status) && (
                             <Button
                               size="sm"
-                              className="gap-1 bg-purple-600 hover:bg-purple-700"
+                              variant="ghost"
+                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => setToCancel(booking)}
                             >
-                              <CreditCard className="h-3.5 w-3.5" /> Pay Now
+                              <XCircle /> Cancel
                             </Button>
-                          </Link>
-                        )}
-
-                        {/* REQUESTED or ACCEPTED Action: Cancel */}
-                        {(booking.status === "REQUESTED" ||
-                          booking.status === "ACCEPTED") && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                            onClick={() => handleCancelBooking(booking.id)}
-                          >
-                            <XCircle className="h-3.5 w-3.5 mr-1" /> Cancel
-                          </Button>
-                        )}
-
-                        {/* COMPLETED Action: Leave Review (শুধু যদি আগে থেকে রিভিউ না দেওয়া থাকে) */}
-                        {booking.status === "COMPLETED" &&
-                          (booking.review ? (
-                            <Badge
-                              variant="outline"
-                              className="gap-1 text-amber-600 border-amber-500/30"
-                            >
-                              <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
-                              Reviewed ({booking.review.rating}/5)
-                            </Badge>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="gap-1"
-                              onClick={() => setReviewBooking(booking)}
-                            >
-                              <MessageSquare className="h-3.5 w-3.5 text-amber-500" />{" "}
-                              Leave Review
-                            </Button>
-                          ))}
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -284,87 +273,98 @@ export default function CustomerBookingsPage() {
             <SimplePagination
               page={page}
               totalPages={totalPages}
-              onPageChange={setPage}
+              onPageChange={(p) => {
+                setLoading(true);
+                setPage(p);
+              }}
+              className="mt-4"
             />
-            </>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>You haven&apos;t made any bookings yet.</p>
-              <Link href="/services">
-                <Button className="mt-4" variant="outline">
-                  Browse Services
-                </Button>
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-14 text-center">
+            <CalendarSearch
+              className="size-9 text-muted-foreground"
+              strokeWidth={1.5}
+            />
+            <p className="font-display text-xl font-semibold">
+              {filter === "ALL"
+                ? "No bookings yet"
+                : `No ${formatBookingStatus(filter).toLowerCase()} bookings`}
+            </p>
+            {filter === "ALL" && (
+              <Button variant="outline" asChild>
+                <Link href="/services">Find a service</Link>
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
 
-      {/* Review Submission Modal */}
+      <ConfirmDialog
+        open={!!toCancel}
+        onOpenChange={(open) => {
+          if (!open) {
+            setToCancel(null);
+            setCancelReason("");
+          }
+        }}
+        title="Cancel this booking?"
+        description={
+          <>
+            <strong className="text-foreground">
+              {toCancel?.service?.title}
+            </strong>{" "}
+            on {toCancel && formatWhen(toCancel.scheduledDate)}.{" "}
+            {toCancel?.status === "PAID" &&
+              "Since it's already paid, our team will process your refund."}
+          </>
+        }
+        confirmLabel="Cancel booking"
+        pending={cancelling}
+        onConfirm={confirmCancel}
+      >
+        <div className="grid gap-1.5">
+          <Label
+            htmlFor="cancel-reason"
+            className="text-[0.82rem] font-semibold"
+          >
+            Reason{" "}
+            <span className="font-normal text-muted-foreground">
+              (optional)
+            </span>
+          </Label>
+          <Textarea
+            id="cancel-reason"
+            rows={2}
+            className="min-h-16"
+            maxLength={300}
+            placeholder="e.g. The problem fixed itself"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+          />
+        </div>
+      </ConfirmDialog>
+
       <Dialog
-        open={!!reviewBooking}
-        onOpenChange={() => setReviewBooking(null)}
+        open={!!toReview}
+        onOpenChange={(open) => !open && !reviewing && setToReview(null)}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Leave a Review</DialogTitle>
+            <DialogTitle className="font-display text-2xl">
+              Rate the job
+            </DialogTitle>
             <DialogDescription>
-              Share your experience for service:{" "}
-              <strong>{reviewBooking?.service?.title}</strong>
+              {toReview?.service?.title} with {toReview?.technician?.name}
             </DialogDescription>
           </DialogHeader>
-
-          <form onSubmit={handleSubmitReview} className="space-y-4 pt-2">
-            {/* Star Rating Picker */}
-            <div className="space-y-1 text-center">
-              <label className="text-xs font-semibold text-muted-foreground">
-                Rating
-              </label>
-              <div className="flex items-center justify-center gap-2 pt-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    className="p-1 focus:outline-none transition-transform hover:scale-110"
-                  >
-                    <Star
-                      className={`h-7 w-7 ${
-                        star <= rating
-                          ? "text-amber-500 fill-amber-500"
-                          : "text-muted-foreground/30"
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Comment Area */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold">Your Comments</label>
-              <Textarea
-                placeholder="How was the technician's work?"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={4}
-                required
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setReviewBooking(null)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={submittingReview}>
-                {submittingReview ? "Submitting..." : "Submit Review"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <ReviewForm
+            key={toReview?.id}
+            pending={reviewing}
+            serverError={reviewError}
+            onSubmit={submitReview}
+            onCancel={() => setToReview(null)}
+          />
         </DialogContent>
       </Dialog>
     </div>

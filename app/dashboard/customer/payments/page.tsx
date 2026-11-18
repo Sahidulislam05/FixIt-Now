@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { getMyPayments } from "@/lib/api/payments";
 import { Payment } from "@/lib/types";
 
@@ -24,25 +25,25 @@ function renderPaymentStatusBadge(status: string) {
   switch (status) {
     case "PAID":
       return (
-        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+        <Badge className="bg-success/10 text-success border-success/20">
           PAID
         </Badge>
       );
     case "PENDING":
       return (
-        <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+        <Badge className="bg-highlight/10 text-primary border-primary/20">
           PENDING
         </Badge>
       );
     case "FAILED":
       return (
-        <Badge className="bg-red-500/10 text-red-600 border-red-500/20">
+        <Badge className="bg-destructive/10 text-destructive border-destructive/20">
           FAILED
         </Badge>
       );
     case "CANCELLED":
       return (
-        <Badge className="bg-slate-500/10 text-slate-600 border-slate-500/20">
+        <Badge className="bg-muted-foreground/10 text-muted-foreground border-muted-foreground/20">
           CANCELLED
         </Badge>
       );
@@ -66,7 +67,9 @@ export default function CustomerPaymentsHistoryPage() {
         setPayments(res.data);
         setTotalPages(res.meta?.totalPages || 1);
       })
-      .catch((err: Error) => console.error(err))
+      .catch(() => {
+        if (!cancelled) toast.error("Failed to load payment history");
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -79,7 +82,7 @@ export default function CustomerPaymentsHistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Payment History</h1>
+        <h1 className="text-3xl font-semibold md:text-4xl">Payment History</h1>
         <p className="text-sm text-muted-foreground">
           View all your completed transaction records
         </p>

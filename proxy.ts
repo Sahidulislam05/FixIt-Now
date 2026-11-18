@@ -36,14 +36,12 @@ export default function proxy(request: NextRequest) {
 
   const isDashboardRoute = pathname.startsWith("/dashboard");
 
-  // লগইন ছাড়া dashboard এ ঢোকা যাবে না
   if (isDashboardRoute && !payload) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // লগইন থাকলেও অন্য role এর dashboard এ ঢোকা যাবে না
   if (isDashboardRoute && payload) {
     const allowedPrefix = ROLE_DASHBOARD_PREFIX[payload.role];
     if (!pathname.startsWith(allowedPrefix)) {
@@ -51,7 +49,6 @@ export default function proxy(request: NextRequest) {
     }
   }
 
-  // আগে থেকে লগইন করা থাকলে login/register পেজে গেলে নিজের dashboard এ পাঠানো
   if (AUTH_PAGES.includes(pathname) && payload) {
     return NextResponse.redirect(
       new URL(ROLE_DASHBOARD_PREFIX[payload.role], request.url),

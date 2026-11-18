@@ -7,7 +7,6 @@ import { getBookingById } from "@/lib/api/bookings";
 import { Booking } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   CheckCircle2,
   XCircle,
@@ -57,8 +56,8 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
       try {
         const res = await getBookingById(bookingId);
         if (!cancelled) setBooking(res.data.booking);
-      } catch (error) {
-        console.error("Failed to verify payment/booking status:", error);
+      } catch {
+        // Status stays unknown; the page shows a neutral message.
       } finally {
         if (!cancelled) setChecking(false);
       }
@@ -83,8 +82,8 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
       try {
         const res = await getBookingById(bookingId);
         setBooking(res.data.booking);
-      } catch (error) {
-        console.error("Payment status poll failed:", error);
+      } catch {
+        // A failed poll just counts as one attempt.
       } finally {
         setPollCount((c) => c + 1);
       }
@@ -105,8 +104,8 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
     // If the live booking status can be verified, that response must drive the current outcome rather than the URL intent.
     if (verifiedPaid) {
       return {
-        icon: <CheckCircle2 className="h-10 w-10" />,
-        title: "Payment Successful!",
+        icon: <CheckCircle2 className="size-9" />,
+        title: "Payment confirmed",
         description:
           "Thank you. Your booking payment has been verified. The technician will arrive at the scheduled time.",
         tone: "success",
@@ -114,8 +113,8 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
     }
     if (verifiedCancelled) {
       return {
-        icon: <XCircle className="h-10 w-10" />,
-        title: "Booking Cancelled",
+        icon: <XCircle className="size-9" />,
+        title: "Booking cancelled",
         description:
           "This booking has been cancelled, so no payment was completed.",
         tone: "danger",
@@ -123,8 +122,8 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
     }
     if (stillPendingConfirm && checking === false && pollCount >= MAX_POLLS) {
       return {
-        icon: <AlertTriangle className="h-10 w-10" />,
-        title: "Still Confirming Your Payment",
+        icon: <AlertTriangle className="size-9" />,
+        title: "Still confirming your payment",
         description:
           "We haven't received final confirmation from the payment gateway yet. If money was deducted, it will reflect here shortly — please check My Bookings in a few minutes before retrying payment.",
         tone: "warning",
@@ -133,8 +132,8 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
 
     if (intent === "success") {
       return {
-        icon: <CheckCircle2 className="h-10 w-10" />,
-        title: "Payment Received",
+        icon: <CheckCircle2 className="size-9" />,
+        title: "Payment received",
         description:
           "We've received your payment confirmation from the gateway. Track the live status of your booking from your dashboard.",
         tone: "success",
@@ -142,89 +141,66 @@ export function PaymentOutcome({ intent }: { intent: PaymentIntent }) {
     }
     if (intent === "fail") {
       return {
-        icon: <XCircle className="h-10 w-10" />,
-        title: "Payment Failed",
+        icon: <XCircle className="size-9" />,
+        title: "Payment didn’t go through",
         description:
           "Your payment could not be completed by the gateway (e.g. card declined or insufficient balance). No amount has been charged. You can retry from your bookings.",
         tone: "danger",
       };
     }
     return {
-      icon: <XCircle className="h-10 w-10" />,
-      title: "Payment Cancelled",
+      icon: <XCircle className="size-9" />,
+      title: "Payment cancelled",
       description:
         "The payment process was cancelled or was not completed. You can try paying again from your booking dashboard.",
       tone: "danger",
     };
   })();
 
-  const toneClasses = {
-    success: {
-      border: "border-emerald-500/30",
-      iconBg: "bg-emerald-100 text-emerald-600",
-    },
-    warning: {
-      border: "border-amber-500/30",
-      iconBg: "bg-amber-100 text-amber-600",
-    },
-    danger: {
-      border: "border-red-500/30",
-      iconBg: "bg-red-100 text-red-600",
-    },
+  const toneClass = {
+    success: "bg-success text-success-foreground",
+    warning: "bg-highlight text-highlight-foreground",
+    danger: "bg-destructive text-white",
   }[copy.tone];
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4">
-      <Card
-        className={`max-w-md w-full text-center p-8 shadow-lg ${toneClasses.border}`}
-      >
-        <CardContent className="space-y-6 p-0">
-          {checking ? (
-            <div className="h-20 w-20 bg-muted text-muted-foreground rounded-full flex items-center justify-center mx-auto">
-              <Loader2 className="h-10 w-10 animate-spin" />
-            </div>
-          ) : (
-            <div
-              className={`h-20 w-20 rounded-full flex items-center justify-center mx-auto ${toneClasses.iconBg}`}
-            >
-              {copy.icon}
-            </div>
-          )}
+    <main className="ruled flex flex-1 items-center justify-center px-4 py-20">
+      <div className="w-full max-w-md animate-rise rounded-xl border bg-card p-8 text-center shadow-[6px_6px_0_0_var(--foreground)]">
+        <div
+          className={`mx-auto grid size-20 place-items-center rounded-full transition-colors duration-500 ${
+            checking ? "bg-muted text-muted-foreground" : toneClass
+          }`}
+        >
+          {checking ? <Loader2 className="size-9 animate-spin" /> : copy.icon}
+        </div>
 
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">
-              {checking ? "Verifying Payment..." : copy.title}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {checking
-                ? "Please wait while we confirm your booking status."
-                : copy.description}
-            </p>
-          </div>
+        <h1 className="mt-6 text-3xl font-semibold">{checking ? "Checking your payment…" : copy.title}</h1>
+        <p className="mt-2 text-sm text-muted-foreground" aria-live="polite">
+          {checking ? "Hold on while we confirm the booking status." : copy.description}
+        </p>
 
-          {!checking && (
-            <div className="flex flex-col gap-2 pt-4">
+        {!checking && (
+          <div className="mt-8 flex flex-col gap-2">
+            <Button asChild>
               <Link href="/dashboard/customer/bookings">
-                <Button className="w-full gap-2">
-                  <Calendar className="h-4 w-4" /> View My Bookings
-                </Button>
+                <Calendar /> View my bookings
               </Link>
-              {copy.tone !== "success" && (
+            </Button>
+            {copy.tone !== "success" && (
+              <Button variant="outline" asChild>
                 <Link href="/dashboard/customer/bookings">
-                  <Button variant="outline" className="w-full gap-2">
-                    <RefreshCw className="h-4 w-4" /> Retry Payment
-                  </Button>
+                  <RefreshCw /> Try paying again
                 </Link>
-              )}
+              </Button>
+            )}
+            <Button variant="ghost" asChild>
               <Link href="/dashboard/customer">
-                <Button variant="ghost" className="w-full gap-2">
-                  <LayoutDashboard className="h-4 w-4" /> Go to Dashboard
-                </Button>
+                <LayoutDashboard /> Go to dashboard
               </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            </Button>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }

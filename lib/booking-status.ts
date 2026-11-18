@@ -1,24 +1,24 @@
 import type { BookingStatus } from "@/lib/types";
 
+/** Badge styles per status — every colour comes from the theme tokens. */
 export const BOOKING_STATUS_BADGE_CLASSES: Record<BookingStatus, string> = {
-  REQUESTED: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-  ACCEPTED: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  DECLINED: "bg-red-500/10 text-red-600 border-red-500/20",
-  PAID: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-  IN_PROGRESS: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-  COMPLETED: "bg-slate-500/10 text-slate-600 border-slate-500/20",
-  CANCELLED: "bg-red-500/10 text-red-600 border-red-500/20",
+  REQUESTED: "bg-highlight/25 text-foreground border-highlight/60",
+  ACCEPTED: "bg-chart-2/15 text-chart-2 border-chart-2/30",
+  DECLINED: "bg-destructive/10 text-destructive border-destructive/25",
+  PAID: "bg-primary/12 text-primary border-primary/30",
+  IN_PROGRESS: "bg-foreground text-background border-foreground",
+  COMPLETED: "bg-success/12 text-success border-success/30",
+  CANCELLED: "bg-muted text-muted-foreground border-border line-through",
 };
 
-// চার্টের জন্য — CSS ভ্যারিয়েবল রেফারেন্স (globals.css-এর ব্র্যান্ড/চার্ট প্যালেট)
 export const BOOKING_STATUS_CHART_COLORS: Record<BookingStatus, string> = {
-  REQUESTED: "var(--chart-4)",
-  ACCEPTED: "var(--chart-1)",
-  DECLINED: "var(--muted-foreground)",
-  PAID: "var(--chart-3)",
-  IN_PROGRESS: "var(--chart-2)",
+  REQUESTED: "var(--chart-3)",
+  ACCEPTED: "var(--chart-2)",
+  DECLINED: "var(--chart-5)",
+  PAID: "var(--chart-1)",
+  IN_PROGRESS: "var(--chart-4)",
   COMPLETED: "var(--success)",
-  CANCELLED: "var(--destructive)",
+  CANCELLED: "var(--muted-foreground)",
 };
 
 export const BOOKING_STATUS_OPTIONS: BookingStatus[] = [
@@ -30,3 +30,7 @@ export const BOOKING_STATUS_OPTIONS: BookingStatus[] = [
   "COMPLETED",
   "CANCELLED",
 ];
+
+export function formatBookingStatus(status: BookingStatus): string {
+  return status.charAt(0) + status.slice(1).toLowerCase().replace("_", " ");
+}

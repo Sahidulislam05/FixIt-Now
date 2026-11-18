@@ -16,3 +16,15 @@ export function updateMyProfile(payload: UpdateProfilePayload) {
         body: payload,
     });
 }
+
+export interface ChangePasswordPayload {
+    currentPassword: string;
+    newPassword: string;
+}
+
+export function changeMyPassword(payload: ChangePasswordPayload) {
+    return apiRequest<ApiSuccessResponse<null>>("/api/users/me/password", {
+        method: "PATCH",
+        body: payload,
+    });
+}

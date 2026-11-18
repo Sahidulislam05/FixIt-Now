@@ -27,5 +27,3 @@ export function getPaymentById(id: string) {
     return apiRequest<ApiSuccessResponse<{ payment: Payment }>>(`/api/payments/${id}`);
 }
 
-// NOTE: POST /api/payments/confirm ফ্রন্টএন্ড থেকে কল করা হয় না —
-// SSLCommerz সার্ভার নিজে থেকেই এটা কল করে payment সম্পন্ন হওয়ার পর।

@@ -12,7 +12,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isLoading: true, // client-এ mount হওয়ার পর AuthHydration ঠিক করে দেয়
+  isLoading: true,
   setUser: (user) => set({ user, isLoading: false }),
   setLoading: (isLoading) => set({ isLoading }),
 }));

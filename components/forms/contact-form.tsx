@@ -1,142 +1,192 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Loader2, CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { FormAlert } from "@/components/forms/form-alert";
+import { sendContactMessage } from "@/lib/api/contact";
+import { ApiError } from "@/lib/api/client";
+
+const MESSAGE_MAX = 2000;
 
 const contactSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  subject: z.string().min(5, "Subject must be at least 5 characters"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
+  email: z.string().trim().email("Please enter a valid email address"),
+  subject: z.string().trim().min(5, "Subject must be at least 5 characters").max(160),
+  message: z
+    .string()
+    .trim()
+    .min(20, "Please give us a little more detail (20+ characters)")
+    .max(MESSAGE_MAX, `Keep it under ${MESSAGE_MAX} characters`),
 });
 
-type ContactFormData = z.infer<typeof contactSchema>;
+type ContactFormValues = z.infer<typeof contactSchema>;
 
 export function ContactForm() {
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<ContactFormData>({
+  const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
+    mode: "onTouched",
+    defaultValues: { name: "", email: "", subject: "", message: "" },
   });
 
-  const onSubmit = async (data: ContactFormData) => {
-    try {
-      // Simulate server interaction
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      toast.success(
-        `Message sent successfully for ${data.name}. We will contact you shortly.`,
-      );
-      setIsSubmitted(true);
-      reset();
-    } catch {
-      toast.error("Failed to send message. Please try again.");
-    }
-  };
+  const messageLength = useWatch({ control: form.control, name: "message" })?.length ?? 0;
 
-  if (isSubmitted) {
-    return (
-      <div className="p-8 text-center border rounded-xl bg-card text-card-foreground shadow-sm">
-        <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold mb-2">Thank You!</h3>
-        <p className="text-muted-foreground mb-6">
-          Your message has been received. Our team will get back to you within
-          24 hours.
-        </p>
-        <Button onClick={() => setIsSubmitted(false)} variant="outline">
-          Send Another Message
-        </Button>
-      </div>
-    );
+  async function onSubmit(values: ContactFormValues) {
+    setServerError(null);
+    try {
+      await sendContactMessage(values);
+      toast.success("Message sent.");
+      setSentTo(values.email);
+      form.reset();
+    } catch (error) {
+      if (error instanceof ApiError && error.issues?.length) {
+        for (const issue of error.issues) {
+          const field = issue.path.replace(/^body\./, "") as keyof ContactFormValues;
+          if (field in values) form.setError(field, { message: issue.message });
+        }
+      }
+      setServerError(
+        error instanceof ApiError ? error.message : "We couldn't send your message. Please try again.",
+      );
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Full Name</Label>
-        <Input
-          id="name"
-          placeholder="Sahidul Islam"
-          {...register("name")}
-          aria-invalid={!!errors.name}
-          className="mt-1"
-        />
-        {errors.name && (
-          <p className="text-xs text-destructive mt-1">{errors.name.message}</p>
-        )}
-      </div>
-
-      <div>
-        <Label htmlFor="email">Email Address</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="sahidul@example.com"
-          {...register("email")}
-          aria-invalid={!!errors.email}
-          className="mt-1"
-        />
-        {errors.email && (
-          <p className="text-xs text-destructive mt-1">
-            {errors.email.message}
+    <AnimatePresence mode="wait" initial={false}>
+      {sentTo ? (
+        <motion.div
+          key="sent"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex flex-col items-start gap-4 py-6"
+          role="status"
+        >
+          <motion.span
+            initial={{ scale: 0, rotate: -40 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.1 }}
+            className="grid size-14 place-items-center rounded-full bg-success text-success-foreground"
+          >
+            <CheckCircle2 className="size-7" />
+          </motion.span>
+          <h3 className="text-2xl font-semibold">Thanks — we&apos;ve got it.</h3>
+          <p className="text-muted-foreground">
+            Someone from our support team will reply to <strong className="text-foreground">{sentTo}</strong>{" "}
+            within one working day.
           </p>
-        )}
-      </div>
+          <Button variant="outline" onClick={() => setSentTo(null)}>
+            Send another message
+          </Button>
+        </motion.div>
+      ) : (
+        <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Your name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Rahim Uddin" autoComplete="name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="you@example.com" autoComplete="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-      <div>
-        <Label htmlFor="subject">Subject</Label>
-        <Input
-          id="subject"
-          placeholder="How can we help you?"
-          {...register("subject")}
-          aria-invalid={!!errors.subject}
-          className="mt-1"
-        />
-        {errors.subject && (
-          <p className="text-xs text-destructive mt-1">
-            {errors.subject.message}
-          </p>
-        )}
-      </div>
+              <FormField
+                control={form.control}
+                name="subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Subject</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g. Question about a booking" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-      <div>
-        <Label htmlFor="message">Message</Label>
-        <Textarea
-          id="message"
-          rows={5}
-          placeholder="Write your detailed inquiry here..."
-          {...register("message")}
-          aria-invalid={!!errors.message}
-          className="mt-1"
-        />
-        {errors.message && (
-          <p className="text-xs text-destructive mt-1">
-            {errors.message.message}
-          </p>
-        )}
-      </div>
+              <FormField
+                control={form.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-baseline justify-between">
+                      <FormLabel>Message</FormLabel>
+                      <span
+                        className={`font-mono text-xs ${messageLength > MESSAGE_MAX ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        {messageLength}/{MESSAGE_MAX}
+                      </span>
+                    </div>
+                    <FormControl>
+                      <Textarea
+                        rows={6}
+                        placeholder="Tell us what happened. If it's about a booking, the service name and date help."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
-          </>
-        ) : (
-          "Send Message"
-        )}
-      </Button>
-    </form>
+              <FormAlert tone="error" message={serverError} />
+
+              <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin" /> Sending…
+                  </>
+                ) : (
+                  <>
+                    Send message <ArrowRight />
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

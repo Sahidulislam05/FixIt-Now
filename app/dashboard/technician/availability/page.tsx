@@ -69,9 +69,7 @@ export default function TechnicianAvailabilityPage() {
           );
         }
       })
-      .catch((err: Error) => {
-        console.error("Failed to load availability", err);
-      })
+      .catch(() => toast.error("Failed to load your availability"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -124,7 +122,7 @@ export default function TechnicianAvailabilityPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-3xl font-semibold md:text-4xl">
           Weekly Availability
         </h1>
         <p className="text-sm text-muted-foreground">

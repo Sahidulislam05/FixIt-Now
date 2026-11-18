@@ -37,17 +37,12 @@ export default function AdminBookingsPage() {
   );
   const [page, setPage] = useState(1);
 
-  // স্ট্যাটাস ফিল্টার বদলালে পেজ ১-এ রিসেট — render-time adjustment প্যাটার্ন
   const [prevStatusFilter, setPrevStatusFilter] = useState(statusFilter);
   if (statusFilter !== prevStatusFilter) {
     setPrevStatusFilter(statusFilter);
     setPage(1);
   }
 
-  // ============================================================
-  // TanStack Query — filter/page বদলালেই queryKey বদলে যায়, হুক নিজে
-  // থেকে রিফেচ করে (queryKeys.bookings.admin, দেখো lib/query-keys.ts)।
-  // ============================================================
   const { data, isLoading: loading } = useAdminBookings({
     status: statusFilter === "ALL" ? undefined : statusFilter,
     page,
@@ -57,10 +52,6 @@ export default function AdminBookingsPage() {
   const totalPages = data?.meta?.totalPages || 1;
   const totalCount = data?.meta?.total ?? bookings.length;
 
-  // ব্যাকএন্ডের /api/admin/bookings এন্ডপয়েন্টে ফ্রি-টেক্সট সার্চ প্যারামিটার
-  // নেই (শুধু status/page/limit) — তাই নাম-ভিত্তিক সার্চ শুধু বর্তমান পেজে
-  // লোড হওয়া রেকর্ডগুলোর মধ্যেই কাজ করে। পুরো ডেটাসেটে সার্চ করতে চাইলে
-  // ব্যাকএন্ডে searchTerm সাপোর্ট যোগ করতে হবে।
   const visibleBookings = bookings.filter((b) => {
     if (!searchTerm) return true;
     const q = searchTerm.toLowerCase();
@@ -74,7 +65,7 @@ export default function AdminBookingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-3xl font-semibold md:text-4xl">
           Global Bookings Oversight
         </h1>
         <p className="text-sm text-muted-foreground">

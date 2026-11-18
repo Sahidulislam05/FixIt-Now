@@ -1,264 +1,235 @@
 "use client";
 
 import { use } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { useService, useServices } from "@/hooks/queries/use-services";
-
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Star,
-  Clock,
-  ShieldCheck,
   ArrowLeft,
-  ArrowRight,
-  Calendar,
+  BadgeCheck,
+  CalendarCheck,
+  CreditCard,
+  MapPin,
+  ShieldCheck,
+  Star,
   Wrench,
-  MessageSquareText,
 } from "lucide-react";
 
-export default function ServiceDetailsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const resolvedParams = use(params);
+import { useService, useServices } from "@/hooks/queries/use-services";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Reveal } from "@/components/shared/reveal";
+import {
+  ServiceCard,
+  ServiceCardSkeleton,
+  ServiceCover,
+} from "@/components/shared/service-card";
+import { getAvatarUrl } from "@/lib/avatar";
+import { formatRating, formatTaka } from "@/lib/format";
 
-  // ============================================================
-  // TanStack Query — আগে useEffect+useState দিয়ে fetch হতো।
-  // এখন useService(id) নিজে ক্যাশ করে, একই সার্ভিস আবার ভিজিট করলে
-  // ইনস্ট্যান্ট লোড হয় (staleTime এর মধ্যে refetch হয় না)।
-  // ============================================================
-  const { data: service, isLoading: loading } = useService(resolvedParams.id);
+const PROMISES = [
+  { icon: ShieldCheck, title: "Verified technician", body: "Account reviewed by the FixItNow team." },
+  { icon: CreditCard, title: "Pay after acceptance", body: "Nothing is charged until the job is confirmed." },
+  { icon: CalendarCheck, title: "Free cancellation", body: "Cancel from your dashboard before work starts." },
+];
 
-  // Related Services — একই ক্যাটাগরির অন্য সার্ভিস (নিজেরটা বাদে)
+export default function ServiceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const { data: service, isLoading } = useService(id);
   const { data: relatedData, isLoading: loadingRelated } = useServices(
-    service ? { categoryId: service.categoryId, limit: 4 } : {},
+    service ? { categoryId: service.categoryId, limit: 5 } : { limit: 0 },
   );
-  const relatedServices = (relatedData?.services ?? []).filter(
-    (s) => s.id !== resolvedParams.id,
-  );
+  const related = (relatedData?.services ?? []).filter((s) => s.id !== id).slice(0, 4);
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-4xl space-y-6">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-12 sm:px-6">
+        <Skeleton className="h-4 w-32" />
+        <div className="mt-8 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
+          <div className="space-y-5">
+            <Skeleton className="h-72 w-full rounded-xl" />
+            <Skeleton className="h-10 w-2/3" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+          <Skeleton className="h-80 w-full rounded-xl" />
+        </div>
+      </main>
     );
   }
 
   if (!service) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center space-y-4">
-        <h2 className="text-2xl font-bold">Service Not Found</h2>
-        <Link href="/services">
-          <Button variant="outline">Back to Services</Button>
-        </Link>
-      </div>
+      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-4 px-4 py-24 text-center">
+        <Wrench className="size-10 text-muted-foreground" strokeWidth={1.5} />
+        <h1 className="text-3xl font-semibold">This service isn&apos;t available</h1>
+        <p className="text-muted-foreground">It may have been removed by the technician.</p>
+        <Button variant="outline" asChild>
+          <Link href="/services">Back to all services</Link>
+        </Button>
+      </main>
     );
   }
 
   const tech = service.technician;
-  // getServiceById রেসপন্সে টেকনিশিয়ানের reviewsAsTechnician এমবেড করা
-  // থাকলে সেটা রিয়েল রিভিউ হিসেবে দেখানো হবে, নাহলে খালি-স্টেট দেখাবে —
-  // কোনো ডামি রিভিউ বসানো হয়নি।
+  const profile = tech?.technicianProfile;
   const reviews = tech?.reviewsAsTechnician ?? [];
 
   return (
-    <div className="container mx-auto px-4 py-10 max-w-5xl space-y-8">
-      {/* Back Button */}
-      <Link
-        href="/services"
-        className="inline-flex items-center text-sm text-muted-foreground hover:text-primary transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4 mr-1" /> Back to Services
-      </Link>
+    <main className="flex-1">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-12">
+        <Link
+          href="/services"
+          className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" /> All services
+        </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Service Overview */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="space-y-3">
-            <Badge className="bg-primary/10 text-primary border-primary/20">
-              {service.category?.name}
-            </Badge>
-            <h1 className="text-3xl font-extrabold tracking-tight">
-              {service.title}
-            </h1>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1 text-amber-500 font-semibold">
-                <Star className="h-4 w-4 fill-amber-500" />
-                {tech?.technicianProfile?.avgRating?.toFixed(1) || "4.8"} Rating
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" /> Available nationwide
-              </span>
-            </div>
-          </div>
+        <div className="mt-6 grid gap-10 lg:grid-cols-[1.6fr_1fr]">
+          <div className="min-w-0 space-y-10">
+            <Reveal>
+              <ServiceCover category={service.category?.name} className="group h-56 rounded-xl md:h-72" />
+            </Reveal>
 
-          <Card className="p-6 space-y-4">
-            <h2 className="text-lg font-bold border-b pb-2">
-              Service Description
-            </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
-              {service.description ||
-                "No description provided for this service."}
-            </p>
-          </Card>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl border bg-card flex items-center gap-3">
-              <ShieldCheck className="h-8 w-8 text-primary" />
-              <div>
-                <h4 className="font-semibold text-sm">Verified Service</h4>
-                <p className="text-xs text-muted-foreground">
-                  Quality & safety guaranteed
-                </p>
+            <Reveal>
+              <p className="eyebrow !text-primary">{service.category?.name}</p>
+              <h1 className="mt-2 text-4xl leading-tight font-semibold md:text-5xl">{service.title}</h1>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 font-mono text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="size-4" /> {service.location || "Dhaka"}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Star className="size-4 fill-highlight text-highlight" />
+                  {formatRating(profile?.avgRating, profile?.totalReviews)}
+                  {!!profile?.totalReviews && ` (${profile.totalReviews} reviews)`}
+                </span>
               </div>
-            </div>
-            <div className="p-4 rounded-xl border bg-card flex items-center gap-3">
-              <Wrench className="h-8 w-8 text-primary" />
-              <div>
-                <h4 className="font-semibold text-sm">Expert Tools</h4>
-                <p className="text-xs text-muted-foreground">
-                  Professional tools provided
-                </p>
-              </div>
-            </div>
-          </div>
+            </Reveal>
 
-          {/* ================= REVIEWS & RATINGS ================= */}
-          <Card className="p-6 space-y-4">
-            <h2 className="text-lg font-bold border-b pb-2 flex items-center gap-2">
-              <MessageSquareText className="h-4 w-4 text-primary" />
-              Reviews & Ratings
-            </h2>
+            <Reveal>
+              <h2 className="text-2xl font-semibold">What&apos;s included</h2>
+              <p className="mt-3 leading-relaxed whitespace-pre-line text-muted-foreground">
+                {service.description || "The technician hasn't added a description yet."}
+              </p>
+            </Reveal>
 
-            {reviews.length > 0 ? (
-              <div className="space-y-4 divide-y">
-                {reviews.slice(0, 5).map((review) => (
-                  <div key={review.id} className="pt-4 first:pt-0 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold">
-                        {review.customer?.name || "Verified Customer"}
-                      </span>
-                      <div className="flex items-center gap-0.5 text-amber-500">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-3.5 w-3.5 ${
-                              i < review.rating
-                                ? "fill-amber-500"
-                                : "fill-none text-muted-foreground/30"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    {review.comment && (
-                      <p className="text-sm text-muted-foreground">
-                        {review.comment}
-                      </p>
-                    )}
-                    <p className="text-[11px] text-muted-foreground">
-                      {new Date(review.createdAt).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
+            <Reveal>
+              <dl className="grid overflow-hidden rounded-xl border sm:grid-cols-3">
+                {[
+                  { label: "Price", value: formatTaka(service.price) },
+                  { label: "Trade", value: service.category?.name ?? "—" },
+                  { label: "Area", value: service.location || "Dhaka" },
+                ].map((item) => (
+                  <div key={item.label} className="border-b p-5 last:border-0 sm:border-r sm:border-b-0">
+                    <dt className="eyebrow">{item.label}</dt>
+                    <dd className="mt-1 font-display text-xl font-semibold">{item.value}</dd>
                   </div>
                 ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground py-6 text-center">
-                এই টেকনিশিয়ানের জন্য এখনো কোনো রিভিউ জমা পড়েনি।
-              </p>
-            )}
-          </Card>
+              </dl>
+            </Reveal>
 
-          {/* ================= RELATED SERVICES ================= */}
-          {(loadingRelated || relatedServices.length > 0) && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-bold">
-                Related Services in {service.category?.name}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {loadingRelated
-                  ? Array.from({ length: 2 }).map((_, i) => (
-                      <Skeleton key={i} className="h-28 w-full rounded-xl" />
-                    ))
-                  : relatedServices.slice(0, 2).map((rs) => (
-                      <Link key={rs.id} href={`/services/${rs.id}`}>
-                        <Card className="p-4 h-full hover:border-primary/50 hover:shadow-sm transition-all">
-                          <h4 className="font-semibold text-sm line-clamp-1">
-                            {rs.title}
-                          </h4>
-                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                            {rs.description || "Professional home service."}
-                          </p>
-                          <div className="flex items-center justify-between mt-3">
-                            <span className="text-primary font-bold text-sm">
-                              ৳{rs.price}
-                            </span>
-                            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                        </Card>
-                      </Link>
-                    ))}
+            <Reveal>
+              <div className="flex items-end justify-between gap-4">
+                <h2 className="text-2xl font-semibold">Reviews for {tech?.name?.split(" ")[0]}</h2>
+                {!!profile?.totalReviews && (
+                  <p className="font-mono text-sm text-muted-foreground">{profile.totalReviews} total</p>
+                )}
               </div>
-            </div>
-          )}
-        </div>
+              {reviews.length > 0 ? (
+                <ul className="mt-5 divide-y border-y">
+                  {reviews.slice(0, 5).map((review) => (
+                    <li key={review.id} className="py-5">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-semibold">{review.customer?.name ?? "Customer"}</span>
+                        <span className="flex gap-0.5" aria-label={`${review.rating} out of 5`}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`size-3.5 ${i < review.rating ? "fill-highlight text-highlight" : "text-muted-foreground/30"}`}
+                            />
+                          ))}
+                        </span>
+                      </div>
+                      {review.comment && <p className="mt-2 text-muted-foreground">{review.comment}</p>}
+                      <p className="mt-2 font-mono text-xs text-muted-foreground">
+                        {new Date(review.createdAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-5 rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+                  No reviews yet. Reviews appear after a customer&apos;s job is completed.
+                </p>
+              )}
+            </Reveal>
+          </div>
 
-        {/* Technician Short Profile & Booking CTA */}
-        <aside className="space-y-6">
-          <Card className="p-6 space-y-6 border-primary/30 shadow-md sticky top-20">
-            <div className="text-center space-y-3 border-b pb-6">
-              <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
-                Service Price
-              </span>
-              <div className="text-4xl font-extrabold text-primary">
-                ৳{service.price}
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <Reveal className="overflow-hidden rounded-xl border bg-card shadow-[6px_6px_0_0_var(--foreground)]">
+              <div className="border-b p-6">
+                <p className="eyebrow">Fixed price</p>
+                <p className="mt-1 font-display text-5xl font-semibold">{formatTaka(service.price)}</p>
+                <p className="mt-1 text-sm text-muted-foreground">Parts, if needed, are billed at cost.</p>
               </div>
-            </div>
 
-            {/* Technician info */}
-            {tech && (
-              <div className="space-y-4">
-                <span className="text-xs font-semibold text-muted-foreground uppercase">
-                  Provided By
-                </span>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 border">
-                    <AvatarFallback>{tech.name[0] || "T"}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-bold text-sm">{tech.name}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {tech.technicianProfile?.experienceYears || 2}+ Years
-                      Experience
+              {tech && (
+                <Link
+                  href={`/technicians/${tech.id}`}
+                  className="flex items-center gap-3 border-b p-6 transition-colors hover:bg-muted/60"
+                >
+                  <div className="relative size-12 overflow-hidden rounded-lg">
+                    <Image src={getAvatarUrl(tech.id)} alt={tech.name} fill sizes="48px" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1 font-semibold">
+                      <span className="truncate">{tech.name}</span>
+                      <BadgeCheck className="size-4 shrink-0 text-primary" />
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {profile?.experienceYears ? `${profile.experienceYears} years experience` : "New technician"}
                     </p>
                   </div>
-                </div>
-              </div>
-            )}
+                </Link>
+              )}
 
-            <Link
-              href={`/technicians/${tech?.id}?serviceId=${service.id}`}
-              className="block"
-            >
-              <Button size="lg" className="w-full gap-2 font-bold">
-                <Calendar className="h-5 w-5" /> Book This Service
-              </Button>
-            </Link>
-          </Card>
-        </aside>
+              <div className="space-y-4 p-6">
+                <Button size="lg" className="w-full" asChild>
+                  <Link href={`/technicians/${tech?.id}?serviceId=${service.id}#book`}>
+                    <CalendarCheck /> Choose a date &amp; book
+                  </Link>
+                </Button>
+                <ul className="space-y-3 pt-2">
+                  {PROMISES.map((p) => (
+                    <li key={p.title} className="flex gap-3 text-sm">
+                      <p.icon className="mt-0.5 size-4 shrink-0 text-primary" />
+                      <span>
+                        <span className="font-medium">{p.title}.</span>{" "}
+                        <span className="text-muted-foreground">{p.body}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          </aside>
+        </div>
       </div>
-    </div>
+
+      {(loadingRelated || related.length > 0) && (
+        <section className="border-t bg-muted/40">
+          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+            <h2 className="mb-8 text-3xl font-semibold">More {service.category?.name?.toLowerCase()} services</h2>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {loadingRelated
+                ? Array.from({ length: 4 }).map((_, i) => <ServiceCardSkeleton key={i} />)
+                : related.map((s) => <ServiceCard key={s.id} service={s} />)}
+            </div>
+          </div>
+        </section>
+      )}
+    </main>
   );
 }

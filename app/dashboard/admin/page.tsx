@@ -6,6 +6,7 @@ import { getAllBookings, getAllUsers } from "@/lib/api/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, CalendarCheck, DollarSign, Wrench } from "lucide-react";
+import { StatCard } from "@/components/shared/stat-card";
 import { toast } from "sonner";
 
 interface Stats {
@@ -37,16 +38,6 @@ export default function AdminOverviewPage() {
   useEffect(() => {
     let cancelled = false;
 
-    // ============================================================
-    // আগে এখানে getAllUsers()/getAllBookings() কল করে res.data.length
-    // দিয়ে টোটাল গণনা হতো — কিন্তু list endpoint গুলো paginated
-    // (ডিফল্ট limit অনুযায়ী শুধু একটা পেজ ফেরত দেয়), তাই ইউজার/বুকিং
-    // সংখ্যা বেশি হলে ড্যাশবোর্ডের সংখ্যাগুলো ভুল (কম) দেখাতো।
-    // এখন প্রতিটা ক্যাটাগরির জন্য limit:1 দিয়ে হালকা রিকোয়েস্ট পাঠিয়ে
-    // শুধু res.meta.total থেকে সঠিক সংখ্যা নেওয়া হচ্ছে। রেভিনিউ হিসাবের
-    // জন্য PAID/COMPLETED বুকিং একসাথে (limit বাড়িয়ে) আনা হচ্ছে —
-    // ব্যাকএন্ডে aggregate/summary endpoint যোগ হলে এটা আরও দ্রুত করা যাবে।
-    // ============================================================
     const fetchStats = async () => {
       try {
         setLoading(true);
@@ -104,8 +95,7 @@ export default function AdminOverviewPage() {
           cancelledBookings: totalOf(cancelledRes),
           totalRevenue: revenue,
         });
-      } catch (error) {
-        console.error("Failed to load platform stats:", error);
+      } catch {
         if (!cancelled) toast.error("Failed to load overview data");
       } finally {
         if (!cancelled) setLoading(false);
@@ -134,82 +124,18 @@ export default function AdminOverviewPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+        <p className="eyebrow">Admin</p>
+        <h1 className="mt-1 text-3xl font-semibold md:text-4xl">Platform overview</h1>
         <p className="text-sm text-muted-foreground">
-          Platform performance and system overview
+          Users, bookings and revenue across FixItNow.
         </p>
       </div>
 
-      {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Users Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Users
-            </CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats.totalCustomers} Customers • {stats.totalTechnicians}{" "}
-              Technicians
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Active Bookings Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Bookings
-            </CardTitle>
-            <CalendarCheck className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">
-              {stats.activeBookings}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Ongoing service requests
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Total Revenue Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Revenue
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">
-              ৳{stats.totalRevenue.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              From completed/paid orders
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Total Technicians Card */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Service Providers
-            </CardTitle>
-            <Wrench className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTechnicians}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Registered technicians
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="Users" value={stats.totalUsers} icon={Users} hint={`${stats.totalCustomers} customers · ${stats.totalTechnicians} technicians`} />
+        <StatCard label="Active bookings" value={stats.activeBookings} icon={CalendarCheck} hint="Requested to in progress" tone="primary" />
+        <StatCard label="Revenue" value={stats.totalRevenue} prefix="৳" icon={DollarSign} hint="Paid and completed jobs" tone="deep" />
+        <StatCard label="Technicians" value={stats.totalTechnicians} icon={Wrench} hint="Registered providers" />
       </div>
 
       {/* Quick Summary Section */}
@@ -228,13 +154,13 @@ export default function AdminOverviewPage() {
           </div>
           <div className="flex items-center justify-between text-sm border-b pb-2">
             <span className="text-muted-foreground">Completed Services</span>
-            <span className="font-semibold text-emerald-600">
+            <span className="font-semibold text-success">
               {stats.completedBookings}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Cancelled Bookings</span>
-            <span className="font-semibold text-red-600">
+            <span className="font-semibold text-destructive">
               {stats.cancelledBookings}
             </span>
           </div>

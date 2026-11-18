@@ -5,9 +5,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-// React 19-এ function component সরাসরি `ref` prop নিতে পারে (forwardRef
-// আর দরকার নেই), তাই react-hook-form-এর {...field} (যেটার ভেতরে ref
-// থাকে) এখানে নিরাপদে spread করা যায়।
 export function PasswordInput({
   className,
   ...props

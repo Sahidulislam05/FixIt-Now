@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { LegalDocument } from "@/components/shared/legal-document";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | FixItNow",
+  title: "Privacy Policy",
   description:
     "Learn how FixItNow collects, stores, and uses information to support customer and technician services.",
 };
@@ -34,25 +35,5 @@ const sections = [
 ];
 
 export default function PrivacyPage() {
-  return (
-    <div className="container mx-auto px-4 py-16 max-w-3xl">
-      <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
-        Privacy Policy
-      </h1>
-      <p className="text-sm text-muted-foreground mb-10">
-        Last updated: January 2026
-      </p>
-
-      <div className="space-y-8">
-        {sections.map((s) => (
-          <div key={s.title}>
-            <h2 className="text-lg font-semibold mb-2">{s.title}</h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {s.body}
-            </p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <LegalDocument title="Privacy Policy" updated="January 2026" sections={sections} />;
 }

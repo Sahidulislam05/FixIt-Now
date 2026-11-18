@@ -11,13 +11,13 @@ import {
 import { getMyProfile } from "@/lib/api/users";
 import { clearAuthTokens, getAccessToken, setAuthTokens } from "@/lib/cookies";
 import { useAuthStore } from "@/lib/store/auth-store";
-import type { Role } from "@/lib/types";
+import { dashboardPathForRole } from "@/lib/format";
 
-
-function dashboardPathForRole(role: Role) {
-  if (role === "ADMIN") return "/dashboard/admin";
-  if (role === "TECHNICIAN") return "/dashboard/technician";
-  return "/dashboard/customer";
+/** Only allow same-site relative paths, so a crafted link can't redirect off-site. */
+function safeRedirect(): string | null {
+  if (typeof window === "undefined") return null;
+  const target = new URLSearchParams(window.location.search).get("redirectTo");
+  return target && target.startsWith("/") && !target.startsWith("//") ? target : null;
 }
 
 export function useCurrentUser() {
@@ -51,7 +51,7 @@ export function useLogin() {
       setUser(me.data.profile);
       queryClient.setQueryData(["me"], me.data.profile);
 
-      router.push(dashboardPathForRole(me.data.profile.role));
+      router.push(safeRedirect() ?? dashboardPathForRole(me.data.profile.role));
     },
   });
 }

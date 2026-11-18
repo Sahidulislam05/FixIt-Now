@@ -1,167 +1,111 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ShieldCheck,
-  Users,
-  Clock,
-  Wrench,
-  Target,
-  HeartHandshake,
-  ArrowRight,
-} from "lucide-react";
-
+import { ArrowRight, Clock, HeartHandshake, ReceiptText, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/shared/page-header";
+import { Reveal } from "@/components/shared/reveal";
+import { SectionHeading } from "@/components/shared/section-heading";
 
 export const metadata: Metadata = {
-  title: "About Us | FixItNow",
+  title: "About",
   description:
-    "FixItNow is a home service marketplace where customers can find trusted, verified technicians for fast and secure home support.",
+    "FixItNow is a home-services marketplace connecting households in Dhaka with verified technicians, with clear prices and secure payment.",
 };
 
-const values = [
+const STANDARDS = [
   {
     icon: ShieldCheck,
-    title: "Verified Technicians",
-    description:
-      "Every technician is reviewed, screened, and assessed before joining our network so you can book with confidence.",
+    title: "Checked before listed",
+    body: "Technician accounts are reviewed before their services go live, and admins can suspend anyone who breaks the rules.",
   },
   {
-    icon: Target,
-    title: "Transparent Pricing",
-    description:
-      "You see service pricing before booking, with no hidden charges or last-minute surprises.",
+    icon: ReceiptText,
+    title: "Price on the label",
+    body: "Each service shows a fixed price for a stated scope of work. Extra parts are billed at cost, with receipts.",
   },
   {
     icon: Clock,
-    title: "Fast Response",
-    description:
-      "Once a service request is submitted, nearby technicians can respond quickly and help when you need it most.",
+    title: "Your time respected",
+    body: "Technicians publish their weekly hours, so you only pick slots they can actually make.",
   },
   {
     icon: HeartHandshake,
-    title: "Customer First",
-    description:
-      "From booking to payment, we design every step to be simple, reliable, and transparent.",
-  },
-];
-
-const steps = [
-  {
-    step: "1",
-    title: "Find a service",
-    description:
-      "Search by category or use the service directory to find what you need.",
-  },
-  {
-    step: "2",
-    title: "Choose a technician",
-    description:
-      "Review ratings, experience, skills, and pricing before selecting the right professional.",
-  },
-  {
-    step: "3",
-    title: "Book your slot",
-    description: "Choose a convenient date and time and confirm your request.",
-  },
-  {
-    step: "4",
-    title: "Pay after service",
-    description:
-      "Complete a secure online payment after the technician completes the job.",
+    title: "Reviews you can trust",
+    body: "Only customers with a completed, paid booking can leave a rating. We never edit or remove honest reviews.",
   },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="flex flex-col">
-      {/* ================= HERO ================= */}
-      <section className="bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-20 ">
-        <div className="container mx-auto px-4 max-w-3xl text-center space-y-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground mx-auto">
-            <Wrench className="h-7 w-7" />
-          </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
-            We make home support easier and more reliable
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            FixItNow brings customers and trusted specialists into one modern
-            home service platform — from plumbing and electrical work to
-            cleaning, repairs, and everyday home maintenance.
-          </p>
-        </div>
-      </section>
+    <main className="flex-1">
+      <PageHeader
+        eyebrow="About FixItNow"
+        title={<>Small repairs shouldn&apos;t be a <em className="text-primary">big hassle.</em></>}
+        description="We started FixItNow after one too many evenings spent calling numbers from a wall flyer. Finding someone reliable to fix a socket or service an AC should take minutes, not days."
+      />
 
-      {/* ================= MISSION ================= */}
-      <section className="py-16">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="text-2xl font-bold mb-4">Our Mission</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            Finding a dependable professional for a small repair or urgent home
-            need should not be complicated. FixItNow removes the guesswork with
-            verified technicians, transparent prices, and secure online booking.
-          </p>
-        </div>
-      </section>
-
-      {/* ================= VALUES ================= */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-10">
-            Our Standards
+      <section className="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+        <Reveal>
+          <p className="eyebrow">What we do</p>
+          <h2 className="mt-3 text-3xl leading-tight font-semibold md:text-4xl">
+            A marketplace with rules that protect both sides of the job.
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((v) => (
-              <Card key={v.title} className="text-center">
-                <CardContent className="p-6 space-y-3">
-                  <div className="p-3 w-max rounded-full bg-primary/10 text-primary mx-auto">
-                    <v.icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="font-semibold">{v.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {v.description}
-                  </p>
-                </CardContent>
-              </Card>
+        </Reveal>
+        <Reveal delay={0.1} className="space-y-5 text-lg text-muted-foreground">
+          <p>
+            Customers see who is coming, what it costs and what other customers thought of the
+            work. Technicians get steady requests, a calendar they control and payment that
+            arrives through the platform instead of being chased.
+          </p>
+          <p>
+            Every booking follows the same path — requested, accepted, paid, in progress, done —
+            and both sides can see exactly where it stands at any moment.
+          </p>
+        </Reveal>
+      </section>
+
+      <section className="border-y bg-muted/50">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+          <Reveal>
+            <SectionHeading label="Our standards" title="Four things we don't compromise on" />
+          </Reveal>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {STANDARDS.map((item, i) => (
+              <Reveal key={item.title} delay={i * 0.06}>
+                <div className="lift h-full rounded-xl border bg-card p-6">
+                  <item.icon className="size-7 text-primary" strokeWidth={1.5} />
+                  <h3 className="mt-5 font-display text-xl font-semibold">{item.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{item.body}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ================= HOW IT WORKS ================= */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-10">How It Works</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((s) => (
-              <div key={s.step} className="relative p-6 rounded-2xl border">
-                <span className="text-4xl font-extrabold text-primary/20">
-                  {s.step}
-                </span>
-                <h3 className="font-semibold mt-2">{s.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {s.description}
-                </p>
-              </div>
-            ))}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+        <Reveal className="relative overflow-hidden rounded-2xl bg-deep px-8 py-14 text-deep-foreground md:px-14">
+          <div className="max-w-2xl">
+            <h2 className="text-3xl font-semibold md:text-5xl">
+              Got something that needs <em className="text-highlight">fixing?</em>
+            </h2>
+            <p className="mt-4 text-lg text-deep-foreground/70">
+              Browse services by trade, compare technicians and send a request in a couple of minutes.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button size="lg" asChild>
+                <Link href="/services">
+                  Browse services <ArrowRight />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="border-deep-foreground/30 bg-transparent text-deep-foreground hover:bg-deep-foreground/10 hover:text-deep-foreground" asChild>
+                <Link href="/contact">Talk to us</Link>
+              </Button>
+            </div>
           </div>
-        </div>
+          <div className="stripe absolute top-0 right-0 hidden h-full w-4 md:block" aria-hidden />
+        </Reveal>
       </section>
-
-      {/* ================= CTA ================= */}
-      <section className="py-16 bg-primary text-primary-foreground mb-16 rounded-xl">
-        <div className="container mx-auto px-4 text-center space-y-5">
-          <Users className="h-10 w-10 mx-auto" />
-          <h2 className="text-2xl md:text-3xl font-bold">
-            Find the right technician for your next home task
-          </h2>
-          <Link href="/services">
-            <Button size="lg" variant="secondary" className="gap-1.5">
-              Explore services <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-    </div>
+    </main>
   );
 }

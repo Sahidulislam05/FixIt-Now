@@ -1,19 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  CalendarClock,
+  ClipboardCheck,
+  CreditCard,
+  MessageSquareQuote,
+  Star,
+} from "lucide-react";
+
 import { useCategories } from "@/hooks/queries/use-categories";
 import { useServices } from "@/hooks/queries/use-services";
 import { useTechnicians } from "@/hooks/queries/use-technicians";
-import { getAvatarUrl, getCategoryIconUrl } from "@/lib/avatar";
+import { useRecentReviews } from "@/hooks/queries/use-reviews";
 
+import { Hero } from "@/components/home/hero";
+import { Reveal } from "@/components/shared/reveal";
+import { SectionHeading } from "@/components/shared/section-heading";
+import {
+  ServiceCard,
+  ServiceCardSkeleton,
+  CategoryIcon,
+} from "@/components/shared/service-card";
+import {
+  TechnicianCard,
+  TechnicianCardSkeleton,
+} from "@/components/shared/technician-card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Accordion,
@@ -21,749 +36,447 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { toast } from "sonner";
 
-import {
-  Search,
-  Star,
-  ShieldCheck,
-  Clock,
-  ArrowRight,
-  Sparkles,
-  Users,
-  CheckCircle2,
-  Wrench,
-  FolderTree,
-  Mail,
-  Send,
-  Loader2,
-  Quote,
-} from "lucide-react";
-
-const TESTIMONIALS = [
+const STEPS = [
   {
-    name: "Rafiq Ahmed",
-    role: "Customer, Dhanmondi",
-    quote:
-      "A water line suddenly started leaking at 11 PM. I booked through FixItNow and a technician arrived within 30 minutes with pricing clearly explained upfront.",
-    rating: 5,
+    icon: ClipboardCheck,
+    title: "Send a request",
+    body: "Pick a service, choose a date and give your address. The price you see is the price you pay.",
   },
   {
-    name: "Nusrat Jahan",
-    role: "Customer, Uttara",
-    quote:
-      "I booked AC servicing and found it easy to select a technician using their profile, reviews, and ratings. The final service was clean and professional.",
-    rating: 5,
+    icon: CalendarClock,
+    title: "Technician confirms",
+    body: "The technician checks their schedule and accepts or declines — usually within a few hours.",
   },
   {
-    name: "Kamal Hossain",
-    role: "Technician, Electrical",
-    quote:
-      "Since joining this platform as an electrician, I’ve received regular job requests and payments are processed on time.",
-    rating: 5,
+    icon: CreditCard,
+    title: "Pay securely",
+    body: "Once accepted, pay through SSLCommerz. Your money is only taken for confirmed jobs.",
+  },
+  {
+    icon: MessageSquareQuote,
+    title: "Job done, leave a review",
+    body: "After the work is marked complete you rate the technician. Ratings are never edited by us.",
   },
 ];
 
 const FAQS = [
   {
     q: "How do I book a service?",
-    a: "Visit the Services page, browse or search for the service you need, then select a service and confirm a date-time slot. You must be signed in to complete a booking.",
+    a: "Open the Services page, pick the job you need and choose a date, time and address. You need an account to send the request.",
   },
   {
-    q: "When do I make payment?",
-    a: "After the technician accepts your booking request and the service is completed, payment can be made securely using SSLCommerz. You can check the status from the dashboard.",
+    q: "When do I pay?",
+    a: "Only after the technician accepts your request. Payment goes through SSLCommerz and the booking status updates in your dashboard straight away.",
   },
   {
     q: "Are technicians verified?",
-    a: "Yes. Every technician goes through identity and skill screening during registration. Customers can also review ratings and professional profile information before booking.",
+    a: "Every technician account is reviewed by our team, and ratings come only from customers with a completed booking.",
   },
   {
     q: "Can I cancel a booking?",
-    a: "Bookings can be cancelled from the dashboard while the service has not started. We recommend doing this before the assigned time window to avoid repeated cancellation.",
+    a: "Yes — from your dashboard, at any point before the work starts. Once a job is in progress it can no longer be cancelled online.",
   },
   {
     q: "How do I join as a technician?",
-    a: "Create an account from the Register page as a Technician, complete your profile, and add services from your dashboard to start accepting bookings.",
+    a: "Register as a Technician, fill in your profile and working hours, then list your services. Requests start arriving as soon as a service is live.",
   },
   {
-    q: "Which areas do you serve?",
-    a: "FixItNow is currently active across several areas of Dhaka. Service listings show location details so you can review availability before booking.",
+    q: "Can I try it without signing up?",
+    a: "Yes. The login page has demo customer, technician and admin accounts with bookings already in every stage, so you can walk through the full flow.",
   },
 ];
 
 export default function HomePage() {
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const cardReveal = {
-    initial: { opacity: 0, y: 18 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, amount: 0.18 },
-  };
-
-  // ============================================================
-  // TanStack Query — এখন আর ম্যানুয়াল useState+useEffect+try/catch
-  // লাগে না। ক্যাশিং, রিফেচ, রিভ্যালিডেশন, রেস-কন্ডিশন হ্যান্ডলিং —
-  // সব হুক নিজে সামলায়। কোথাও নতুন service create/update/delete
-  // হলে queryKeys.services.all invalidate হয় (দেখো
-  // hooks/mutations/use-service-mutations.ts), তখন এই হোমপেজও
-  // reload ছাড়াই নিজে থেকে আপডেট হয়ে যাবে।
-  // ============================================================
   const { data: categories = [], isLoading: loadingCategories } =
     useCategories();
-
   const { data: servicesData, isLoading: loadingServices } = useServices({
-    limit: 6,
+    limit: 8,
   });
-  const services = servicesData?.services ?? [];
-
   const { data: techniciansData, isLoading: loadingTechnicians } =
     useTechnicians({ limit: 4 });
+  const { data: reviews = [], isLoading: loadingReviews } = useRecentReviews(3);
+
+  const services = servicesData?.services ?? [];
   const technicians = techniciansData?.technicians ?? [];
 
-  // ============================================================
-  // Newsletter ফর্ম — client-side validation + loading + success state।
-  // (এখনো কোনো newsletter API এন্ডপয়েন্ট নেই, তাই সাবমিট সিমুলেট করা
-  // হয়েছে — backend রেডি হলে শুধু handleNewsletterSubmit-এর ভেতরে
-  // আসল API কল বসিয়ে দিলেই হবে।)
-  // ============================================================
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterError, setNewsletterError] = useState("");
-  const [newsletterLoading, setNewsletterLoading] = useState(false);
-
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = newsletterEmail.trim();
-    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-
-    if (!trimmed) {
-      setNewsletterError("Email address is required");
-      return;
-    }
-    if (!isValidEmail) {
-      setNewsletterError("Enter a valid email address");
-      return;
-    }
-
-    setNewsletterError("");
-    setNewsletterLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    setNewsletterLoading(false);
-    setNewsletterEmail("");
-    toast.success(
-      "Subscribed! You’ll get the latest service updates in your inbox.",
-    );
-  };
-
-  // Handle Search Submission
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/services?search=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      router.push("/services");
-    }
-  };
-
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* ================= HERO SECTION ================= */}
-      <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, ease: "easeOut" }}
-        className="relative bg-gradient-to-b from-primary/10 via-background to-background py-16 md:py-24"
-      >
-        <div className="container mx-auto px-4 text-center max-w-4xl space-y-6">
-          <Badge
-            variant="secondary"
-            className="px-3 py-1 text-sm font-medium rounded-full bg-primary/10 text-primary border-primary/20"
-          >
-            <Sparkles className="w-3.5 h-3.5 mr-1.5 inline" />
-            Your #1 Home Service Marketplace in Bangladesh
-          </Badge>
+    <main className="flex flex-col">
+      <Hero
+        services={services}
+        categories={categories}
+        loading={loadingServices || loadingCategories}
+        totals={{
+          services: servicesData?.meta?.total,
+          technicians: techniciansData?.meta?.total,
+          categories: loadingCategories ? undefined : categories.length,
+        }}
+      />
 
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
-            Expert Home Services, <br className="hidden sm:inline" />
-            <span className="text-primary">Just a Click Away.</span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Book verified plumbers, electricians, cleaners, and technicians for
-            all your home repair and maintenance needs.
-          </p>
-
-          {/* Search Bar */}
-          <form
-            onSubmit={handleSearch}
-            className="flex flex-col sm:flex-row items-center justify-center gap-2 max-w-2xl mx-auto pt-4"
-          >
-            <div className="relative w-full">
-              <Search className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search services (e.g. AC Repair, Plumbing)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 h-12 text-base rounded-lg border-muted-foreground/30 focus-visible:ring-primary"
-              />
-            </div>
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full sm:w-auto h-12 px-8 font-semibold text-base shadow-md"
-            >
-              Search
-            </Button>
-          </form>
-
-          {/* CTAs & Quick Info */}
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground pt-4">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-              <span>Verified Technicians</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              <span>Transparent Pricing</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4 text-primary" />
-              <span>Instant Slot Booking</span>
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ================= CATEGORIES SECTION ================= */}
-      <motion.section
-        {...cardReveal}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-        className="py-12 bg-muted/30"
-      >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">
-                Explore Categories
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Find services by specialized categories
-              </p>
-            </div>
-            <Link href="/services">
-              <Button variant="ghost" className="text-primary gap-1">
-                View All <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          {/* Categories Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {loadingCategories ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full rounded-xl" />
-              ))
-            ) : categories.length > 0 ? (
-              categories.map((cat) => (
-                <Link key={cat.id} href={`/services?categoryId=${cat.id}`}>
-                  <Card className="hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer h-full text-center">
-                    <CardContent className="p-4 flex flex-col items-center justify-center h-full space-y-2">
-                      <div className="relative h-11 w-11 rounded-full overflow-hidden bg-primary/10 ring-1 ring-primary/15">
-                        <Image
-                          src={getCategoryIconUrl(cat.icon || cat.name)}
-                          alt={cat.name}
-                          fill
-                          sizes="44px"
-                          className="object-cover"
-                        />
-                      </div>
-                      <span className="font-semibold text-sm line-clamp-1">
-                        {cat.name}
-                      </span>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
-            ) : (
-              <p className="col-span-full text-center text-muted-foreground py-4">
-                No categories available right now.
-              </p>
-            )}
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ================= FEATURED SERVICES ================= */}
-      <motion.section
-        {...cardReveal}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="py-16"
-      >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">
-                Featured Services
-              </h2>
-              <p className="text-muted-foreground">
-                Top quality services booked by happy customers
-              </p>
-            </div>
-            <Link href="/services">
-              <Button variant="outline" className="gap-1">
-                Explore All Services <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          {/* Services Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loadingServices ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <Skeleton className="h-48 w-full" />
-                  <CardContent className="p-5 space-y-3">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                    <Skeleton className="h-5 w-1/3" />
-                  </CardContent>
-                </Card>
-              ))
-            ) : services.length > 0 ? (
-              services.map((service) => (
-                <Card
-                  key={service.id}
-                  className="overflow-hidden flex flex-col justify-between hover:shadow-lg transition-shadow duration-200"
+      {/* Trades ticker */}
+      {categories.length > 0 && (
+        <div
+          className="overflow-hidden border-b bg-highlight py-3 text-highlight-foreground"
+          aria-hidden
+        >
+          <div className="flex w-max animate-marquee gap-10 whitespace-nowrap">
+            {[...categories, ...categories].map((cat, i) => {
+              return (
+                <span
+                  key={`${cat.id}-${i}`}
+                  className="flex items-center gap-3 font-display text-xl italic"
                 >
-                  <div>
-                    {/* Placeholder / Image Header */}
-                    <div className="h-44 bg-gradient-to-r from-slate-800 to-slate-900 relative p-4 flex flex-col justify-between text-white">
-                      <Badge className="w-max bg-primary text-primary-foreground">
-                        {service.category?.name || "General"}
-                      </Badge>
-                      <div>
-                        <h3 className="font-bold text-lg line-clamp-1">
-                          {service.title}
-                        </h3>
-                        <p className="text-xs text-slate-300 flex items-center gap-1 mt-1">
-                          By{" "}
-                          {service.technician?.name || "Qualified Specialist"}
-                        </p>
-                      </div>
-                    </div>
+                  <CategoryIcon category={cat.name} className="size-5" /> {cat.name}
+                  <span className="ml-7 text-highlight-foreground/40">✳</span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-                    <CardContent className="p-5 space-y-3">
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {service.description ||
-                          "Professional service guaranteed with high satisfaction and quick setup."}
-                      </p>
+      {/* 01 — Categories */}
+      <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 md:py-24">
+        <Reveal>
+          <SectionHeading
+            index="01"
+            label="Trades"
+            title={
+              <>
+                Whatever broke, there&apos;s a{" "}
+                <em className="text-primary">specialist</em> for it.
+              </>
+            }
+            description="Browse by trade to see every listed service, its price and who does the work."
+            action={
+              <Button variant="outline" asChild>
+                <Link href="/services">
+                  All services <ArrowRight />
+                </Link>
+              </Button>
+            }
+          />
+        </Reveal>
 
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1 text-amber-500 font-semibold">
-                          <Star className="h-4 w-4 fill-amber-500" />
-                          <span>
-                            {service.technician?.technicianProfile?.avgRating
-                              ? service.technician.technicianProfile.avgRating.toFixed(
-                                  1,
-                                )
-                              : "4.8"}
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
+          {loadingCategories
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-card p-6">
+                  <Skeleton className="mb-6 size-8" />
+                  <Skeleton className="h-5 w-2/3" />
+                </div>
+              ))
+            : categories.slice(0, 8).map((cat, i) => {
+                return (
+                  <div key={cat.id} className="bg-card">
+                    <Reveal delay={i * 0.04} className="h-full">
+                      <Link
+                        href={`/services?categoryId=${cat.id}`}
+                        className="group relative flex h-full flex-col gap-6 p-5 transition-colors hover:bg-foreground hover:text-background sm:p-6"
+                      >
+                        <div className="flex items-start justify-between">
+                          <CategoryIcon
+                            category={cat.name}
+                            className="size-8 text-primary transition-transform duration-500 group-hover:-rotate-12"
+                            strokeWidth={1.5}
+                          />
+                          <span className="font-mono text-xs text-muted-foreground group-hover:text-background/60">
+                            {String(i + 1).padStart(2, "0")}
                           </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {service.location || "Available nationwide"}
-                        </span>
-                      </div>
-                    </CardContent>
+                        <div>
+                          <h3 className="font-display text-lg font-semibold sm:text-xl">
+                            {cat.name}
+                          </h3>
+                          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground group-hover:text-background/70">
+                            {cat.description}
+                          </p>
+                        </div>
+                        <ArrowUpRight className="absolute right-5 bottom-5 size-5 opacity-0 transition-all group-hover:opacity-100" />
+                      </Link>
+                    </Reveal>
                   </div>
-
-                  <CardFooter className="p-5 pt-0 flex items-center justify-between border-t border-border/50 mt-auto">
-                    <div>
-                      <span className="text-xs text-muted-foreground block">
-                        Starting from
-                      </span>
-                      <span className="text-xl font-bold text-primary">
-                        BDT {service.price}
-                      </span>
-                    </div>
-                    <Link href={`/services/${service.id}`}>
-                      <Button size="sm">Book Service</Button>
-                    </Link>
-                  </CardFooter>
-                </Card>
-              ))
-            ) : (
-              <p className="col-span-full text-center text-muted-foreground py-8">
-                No services listed yet.
-              </p>
-            )}
-          </div>
+                );
+              })}
         </div>
-      </motion.section>
+      </section>
 
-      {/* ================= TOP TECHNICIANS ================= */}
-      <motion.section
-        {...cardReveal}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="py-16 bg-muted/20"
-      >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">
-                Top-Rated Technicians
-              </h2>
-              <p className="text-muted-foreground">
-                Hire skilled and background-checked specialists
-              </p>
-            </div>
-            <Link href="/technicians">
-              <Button variant="outline" className="gap-1">
-                View All Technicians <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          {/* Technicians Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {loadingTechnicians ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="p-5 space-y-4">
-                  <Skeleton className="h-16 w-16 rounded-full mx-auto" />
-                  <Skeleton className="h-5 w-3/4 mx-auto" />
-                  <Skeleton className="h-4 w-1/2 mx-auto" />
-                  <Skeleton className="h-9 w-full rounded-md" />
-                </Card>
-              ))
-            ) : technicians.length > 0 ? (
-              technicians.map((tech) => (
-                <Card
-                  key={tech.id}
-                  className="text-center p-6 flex flex-col justify-between hover:border-primary/40 transition-colors"
+      {/* 02 — How it works */}
+      <section className="bg-deep text-deep-foreground">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-24">
+          <Reveal>
+            <SectionHeading
+              index="02"
+              label="How it works"
+              className="[&_.eyebrow]:text-deep-foreground/60 [&_p]:text-deep-foreground/70"
+              title={
+                <>
+                  Four steps, and you always know{" "}
+                  <em className="text-highlight">where you stand.</em>
+                </>
+              }
+              description="Every booking moves through the same visible stages, for you and for the technician."
+            />
+          </Reveal>
+          <ol className="grid gap-px overflow-hidden rounded-xl bg-deep-foreground/15 md:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((step, i) => (
+              <li key={step.title} className="bg-deep">
+                <Reveal
+                  delay={i * 0.08}
+                  className="flex h-full flex-col gap-4 p-7"
                 >
-                  <div className="space-y-4">
-                    <div className="relative h-20 w-20 mx-auto rounded-full overflow-hidden border-2 border-primary/20 bg-muted">
-                      <Image
-                        src={getAvatarUrl(tech.id || tech.name)}
-                        alt={tech.name || "Technician"}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    </div>
-
-                    <div>
-                      <h3 className="font-bold text-lg">
-                        {tech.name || "Technician"}
-                      </h3>
-                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                        {tech.technicianProfile?.skills?.length
-                          ? tech.technicianProfile.skills.join(", ")
-                          : "General Specialist"}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground pt-1">
-                      <div className="flex items-center gap-1 font-semibold text-amber-500">
-                        <Star className="h-3.5 w-3.5 fill-amber-500" />
-                        <span>
-                          {tech.technicianProfile?.avgRating
-                            ? tech.technicianProfile.avgRating.toFixed(1)
-                            : "5.0"}
-                        </span>
-                      </div>
-                      <div>•</div>
-                      <div>
-                        {tech.technicianProfile?.experienceYears || 2}+ Years
-                        Exp
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <step.icon
+                      className="size-7 text-highlight"
+                      strokeWidth={1.5}
+                    />
+                    <span className="font-display text-5xl text-deep-foreground/20 italic">
+                      {i + 1}
+                    </span>
                   </div>
+                  <h3 className="font-display text-xl font-semibold">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-deep-foreground/70">{step.body}</p>
+                </Reveal>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
-                  <div className="pt-6 mt-4 border-t">
-                    <Link href={`/technicians/${tech.id}`}>
-                      <Button
-                        variant="secondary"
-                        className="w-full text-xs font-semibold"
-                      >
-                        View Profile & Book
-                      </Button>
-                    </Link>
-                  </div>
-                </Card>
+      {/* 03 — Featured services */}
+      <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 md:py-24">
+        <Reveal>
+          <SectionHeading
+            index="03"
+            label="Recently listed"
+            title="Fresh on the board"
+            description="New services from technicians near you. Prices are fixed for the listed scope of work."
+            action={
+              <Button variant="outline" asChild>
+                <Link href="/services">
+                  Browse everything <ArrowRight />
+                </Link>
+              </Button>
+            }
+          />
+        </Reveal>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {loadingServices
+            ? Array.from({ length: 8 }).map((_, i) => (
+                <ServiceCardSkeleton key={i} />
               ))
-            ) : (
-              <p className="col-span-full text-center text-muted-foreground py-8">
-                No technicians available at this moment.
-              </p>
-            )}
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ================= WHY CHOOSE US ================= */}
-      <motion.section
-        {...cardReveal}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-        className="py-16"
-      >
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="p-6 space-y-3 rounded-2xl bg-primary/5 border border-primary/10">
-              <div className="p-3 w-max rounded-full bg-primary/10 text-primary mx-auto">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-lg">Verified Experts</h3>
-              <p className="text-sm text-muted-foreground">
-                Every technician goes through background verification and skill
-                tests.
-              </p>
-            </div>
-
-            <div className="p-6 space-y-3 rounded-2xl bg-primary/5 border border-primary/10">
-              <div className="p-3 w-max rounded-full bg-primary/10 text-primary mx-auto">
-                <Users className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-lg">Hassle-free Booking</h3>
-              <p className="text-sm text-muted-foreground">
-                Select your required service, pick a date-time slot, and track
-                everything live.
-              </p>
-            </div>
-
-            <div className="p-6 space-y-3 rounded-2xl bg-primary/5 border border-primary/10">
-              <div className="p-3 w-max rounded-full bg-primary/10 text-primary mx-auto">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <h3 className="font-bold text-lg">100% Secure Payment</h3>
-              <p className="text-sm text-muted-foreground">
-                Pay via SSLCommerz after the technician accepts your booking
-                request.
-              </p>
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ================= STATS (real dynamic counts) ================= */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true, amount: 0.2 }}
-        className="py-14 bg-primary text-primary-foreground"
-      >
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="flex items-center justify-center gap-2 text-3xl md:text-4xl font-extrabold">
-                <Wrench className="h-7 w-7" />
-                {loadingServices ? (
-                  <Skeleton className="h-9 w-14 bg-primary-foreground/20" />
-                ) : (
-                  <span>{servicesData?.meta?.total ?? services.length}+</span>
-                )}
-              </div>
-              <p className="text-sm text-primary-foreground/80 mt-1">
-                Services Listed
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-center gap-2 text-3xl md:text-4xl font-extrabold">
-                <Users className="h-7 w-7" />
-                {loadingTechnicians ? (
-                  <Skeleton className="h-9 w-14 bg-primary-foreground/20" />
-                ) : (
-                  <span>
-                    {techniciansData?.meta?.total ?? technicians.length}+
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-primary-foreground/80 mt-1">
-                Verified Technicians
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-center gap-2 text-3xl md:text-4xl font-extrabold">
-                <FolderTree className="h-7 w-7" />
-                {loadingCategories ? (
-                  <Skeleton className="h-9 w-10 bg-primary-foreground/20" />
-                ) : (
-                  <span>{categories.length}+</span>
-                )}
-              </div>
-              <p className="text-sm text-primary-foreground/80 mt-1">
-                Service Categories
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-center gap-2 text-3xl md:text-4xl font-extrabold">
-                <Clock className="h-7 w-7" />
-                <span>24/7</span>
-              </div>
-              <p className="text-sm text-primary-foreground/80 mt-1">
-                Customer Support
-              </p>
-            </div>
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ================= TESTIMONIALS ================= */}
-      <motion.section
-        {...cardReveal}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="py-16"
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-xl mx-auto mb-12">
-            <h2 className="text-3xl font-bold tracking-tight">
-              What customers are saying
-            </h2>
-            <p className="text-muted-foreground mt-2">
-              Real stories from customers and technicians using FixItNow
+            : services.map((service, i) => (
+                <Reveal
+                  key={service.id}
+                  delay={(i % 4) * 0.06}
+                  className="h-full"
+                >
+                  <ServiceCard service={service} />
+                </Reveal>
+              ))}
+          {!loadingServices && services.length === 0 && (
+            <p className="col-span-full rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+              No services are listed yet. Technicians can add the first one from
+              their dashboard.
             </p>
-          </div>
+          )}
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <Card key={t.name} className="relative">
-                <CardContent className="p-6 space-y-4">
-                  <Quote className="h-7 w-7 text-primary/30" />
-                  <p className="text-sm text-foreground/90 leading-relaxed">
-                    {t.quote}
-                  </p>
-                  <div className="flex items-center gap-1 text-amber-500">
-                    {Array.from({ length: t.rating }).map((_, i) => (
-                      <Star key={i} className="h-3.5 w-3.5 fill-amber-500" />
+      {/* 04 — Technicians */}
+      <section className="border-y bg-muted/50">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 md:py-24">
+          <Reveal>
+            <SectionHeading
+              index="04"
+              label="The people"
+              title={
+                <>
+                  Technicians with a{" "}
+                  <em className="text-primary">track record.</em>
+                </>
+              }
+              description="Ratings come only from customers who completed a paid booking."
+              action={
+                <Button variant="outline" asChild>
+                  <Link href="/technicians">
+                    Meet everyone <ArrowRight />
+                  </Link>
+                </Button>
+              }
+            />
+          </Reveal>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {loadingTechnicians
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <TechnicianCardSkeleton key={i} />
+                ))
+              : technicians.map((tech, i) => (
+                  <Reveal key={tech.id} delay={i * 0.06} className="h-full">
+                    <TechnicianCard technician={tech} />
+                  </Reveal>
+                ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 05 — Reviews */}
+      <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 md:py-24">
+        <Reveal>
+          <SectionHeading
+            index="05"
+            label="Straight from customers"
+            title="What people said after the job"
+          />
+        </Reveal>
+        <div className="grid gap-5 md:grid-cols-3">
+          {loadingReviews &&
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-56 rounded-xl" />
+            ))}
+          {!loadingReviews &&
+            reviews.map((review, i) => (
+              <Reveal key={review.id} delay={i * 0.08}>
+                <figure
+                  className={`flex h-full flex-col rounded-xl border p-7 ${
+                    i === 1
+                      ? "bg-primary text-primary-foreground md:-translate-y-4"
+                      : "bg-card"
+                  }`}
+                >
+                  <div
+                    className="flex gap-0.5"
+                    aria-label={`${review.rating} out of 5 stars`}
+                  >
+                    {Array.from({ length: 5 }).map((_, s) => (
+                      <Star
+                        key={s}
+                        className={`size-4 ${s < review.rating ? "fill-highlight text-highlight" : "opacity-30"}`}
+                      />
                     ))}
                   </div>
-                  <div className="pt-2 border-t">
-                    <p className="font-semibold text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </CardContent>
-              </Card>
+                  <blockquote className="mt-5 flex-1 font-display text-lg leading-snug">
+                    “{review.comment}”
+                  </blockquote>
+                  <figcaption className="mt-6 border-t border-current/15 pt-4 text-sm">
+                    <span className="font-semibold">{review.customerName}</span>
+                    <span className="opacity-75">
+                      {" "}
+                      on {review.booking.service.title}
+                    </span>
+                    <Link
+                      href={`/technicians/${review.technician.id}`}
+                      className="mt-1 block font-mono text-xs opacity-75 hover:underline"
+                    >
+                      Technician: {review.technician.name}
+                    </Link>
+                  </figcaption>
+                </figure>
+              </Reveal>
             ))}
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ================= FAQ ================= */}
-      <motion.section
-        {...cardReveal}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        id="faq"
-        className="py-16 bg-muted/30 scroll-mt-16"
-      >
-        <div className="container mx-auto px-4 max-w-3xl">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold tracking-tight">
-              Frequently asked questions
-            </h2>
-            <p className="text-muted-foreground mt-2">
-              Learn more about how FixItNow works
+          {!loadingReviews && reviews.length === 0 && (
+            <p className="col-span-full rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+              Reviews show up here once customers rate their completed jobs.
             </p>
-          </div>
-
-          <Accordion
-            type="single"
-            collapsible
-            className="bg-background rounded-xl border px-4"
-          >
-            {FAQS.map((faq, i) => (
-              <AccordionItem key={faq.q} value={`faq-${i}`}>
-                <AccordionTrigger className="text-left">
-                  {faq.q}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  {faq.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          )}
         </div>
-      </motion.section>
+      </section>
 
-      {/* ================= NEWSLETTER + FINAL CTA ================= */}
-      <motion.section
-        {...cardReveal}
-        transition={{ duration: 0.55, ease: "easeOut" }}
-        className="py-16"
-      >
-        <div className="container mx-auto px-4">
-          <div className="rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-3">
-              <h2 className="text-2xl md:text-3xl font-bold">
-                Stay in the loop with new offers and updates
-              </h2>
-              <p className="text-primary-foreground/85 text-sm md:text-base">
-                Get seasonal discounts, new service categories, and platform
-                updates straight to your inbox.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <form
-                onSubmit={handleNewsletterSubmit}
-                noValidate
-                className="flex flex-col sm:flex-row gap-2"
-              >
-                <div className="relative flex-1">
-                  <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-primary" />
-                  <Input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={newsletterEmail}
-                    onChange={(e) => {
-                      setNewsletterEmail(e.target.value);
-                      if (newsletterError) setNewsletterError("");
-                    }}
-                    aria-label="Email address"
-                    aria-invalid={!!newsletterError}
-                    disabled={newsletterLoading}
-                    className="pl-10 h-11 bg-background text-foreground border-0"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  size="lg"
-                  variant="secondary"
-                  disabled={newsletterLoading}
-                  className="h-11 font-semibold gap-1.5 shrink-0"
+      {/* 06 — FAQ */}
+      <section id="faq" className="scroll-mt-20 border-t">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 md:py-24 lg:grid-cols-[1fr_1.4fr]">
+          <Reveal>
+            <SectionHeading
+              index="06"
+              label="Questions"
+              title="Before you book"
+              description={
+                <>
+                  Still unsure?{" "}
+                  <Link
+                    href="/contact"
+                    className="text-primary underline underline-offset-4"
+                  >
+                    Write to us
+                  </Link>{" "}
+                  — a person replies within a working day.
+                </>
+              }
+              className="lg:sticky lg:top-24"
+            />
+          </Reveal>
+          <Reveal delay={0.1}>
+            <Accordion type="single" collapsible className="border-t">
+              {FAQS.map((faq, i) => (
+                <AccordionItem
+                  key={faq.q}
+                  value={`faq-${i}`}
+                  className="border-b"
                 >
-                  {newsletterLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      Subscribe <Send className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-              {newsletterError && (
-                <p className="text-xs text-red-100 bg-red-600/40 rounded px-3 py-1.5 w-max">
-                  {newsletterError}
-                </p>
-              )}
+                  <AccordionTrigger className="py-5 text-left font-display text-lg font-medium hover:no-underline">
+                    <span>
+                      <span className="mr-3 font-mono text-xs text-primary">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      {faq.q}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-5 pl-8 text-[0.95rem] text-muted-foreground">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </Reveal>
+        </div>
+      </section>
 
-              <Link href="/services" className="inline-block pt-1">
-                <Button
-                  variant="link"
-                  className="text-primary-foreground gap-1 px-0"
-                >
-                  Browse services now <ArrowRight className="h-4 w-4" />
-                </Button>
+      {/* 07 — Calls to action */}
+      <section className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-24 sm:px-6 md:grid-cols-2">
+        <Reveal className="h-full">
+          <div className="relative flex h-full flex-col overflow-hidden rounded-2xl bg-foreground p-8 text-background md:p-10">
+            <p className="eyebrow !text-background/60">For technicians</p>
+            <h2 className="mt-3 text-3xl font-semibold md:text-4xl">
+              Run your trade,{" "}
+              <em className="text-highlight">not your inbox.</em>
+            </h2>
+            <p className="mt-4 max-w-md text-background/70">
+              List your services, set your working hours and get paid through
+              the platform. No listing fees.
+            </p>
+            <Button className="mt-8 w-max" size="lg" asChild>
+              <Link href="/register">
+                Join as a technician <ArrowRight />
               </Link>
-            </div>
+            </Button>
+            <div
+              className="stripe absolute top-0 right-0 h-full w-3"
+              aria-hidden
+            />
           </div>
-        </div>
-      </motion.section>
-    </div>
+        </Reveal>
+        <Reveal delay={0.08} className="h-full">
+          <div className="ruled flex h-full flex-col rounded-2xl border bg-card p-8 md:p-10">
+            <p className="eyebrow">Just looking around?</p>
+            <h2 className="mt-3 text-3xl font-semibold md:text-4xl">
+              Try the whole flow with a{" "}
+              <em className="text-primary">demo account.</em>
+            </h2>
+            <p className="mt-4 max-w-md text-muted-foreground">
+              Log in as a customer, technician or admin. The demo data has a
+              booking waiting at every stage — accept it, pay for it, finish it,
+              review it.
+            </p>
+            <Button className="mt-8 w-max" size="lg" variant="ink" asChild>
+              <Link href="/login">
+                Open the demo <ArrowUpRight />
+              </Link>
+            </Button>
+          </div>
+        </Reveal>
+      </section>
+    </main>
   );
 }

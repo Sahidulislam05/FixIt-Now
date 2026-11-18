@@ -25,11 +25,6 @@ interface TableToolbarProps {
   statusPlaceholder?: string;
 }
 
-// ============================================================
-// Admin/Technician/Customer — সব dashboard table-এই এক ধরনের
-// "সার্চ বক্স + স্ট্যাটাস ফিল্টার" UI দরকার। এক জায়গায় বানিয়ে
-// রাখলে প্রতিটা পেজে কপি-পেস্ট করা লাগছে না, চেহারাও কনসিস্টেন্ট থাকছে।
-// ============================================================
 export function TableToolbar({
   searchValue,
   onSearchChange,

@@ -10,11 +10,6 @@ const API_BASE_URL = (
   .replace(/\/api\/?$/, "")
   .replace(/\/$/, "");
 
-if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV !== "production") {
-  // শুধু dev-এ warning — build ভাঙবে না, কিন্তু ভুলে .env.local বসাতে ভুলে গেলে সাথে সাথে ধরা পড়বে
-  console.warn("⚠️ NEXT_PUBLIC_API_URL সেট করা নেই — .env.local চেক করো");
-}
-
 export class ApiError extends Error {
   statusCode: number;
   issues?: ApiErrorIssue[];
@@ -33,7 +28,6 @@ interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   query?: Record<string, QueryValue>;
-  /** default true — token থাকলে Authorization header এ বসবে */
   auth?: boolean;
 }
 
@@ -44,7 +38,6 @@ function handleSessionExpired() {
   if (sessionExpiredHandled) return;
 
   const path = window.location.pathname;
-  // লগইন/রেজিস্টার পেজে থাকলে redirect লুপের দরকার নেই
   if (path === "/login" || path === "/register") return;
 
   sessionExpiredHandled = true;
@@ -98,7 +91,6 @@ export async function apiRequest<T>(
       cache: "no-store",
     });
   } catch {
-    // নেটওয়ার্ক-লেভেল ব্যর্থতা (সার্ভার ডাউন, DNS, ইত্যাদি) — HTTP status ই নেই
     throw new ApiError(
       "Network error. Please check your internet connection and try again.",
       0,
@@ -112,8 +104,6 @@ export async function apiRequest<T>(
       json?.message || "Something went wrong. Please try again.";
     const issues: ApiErrorIssue[] | undefined = json?.errorDetails?.issues;
 
-    // টোকেন পাঠানোর পরও 401 মানে সেশন এক্সপায়ার্ড/ইনভ্যালিড — auto-logout করাই ভালো UX।
-    // টোকেন ছাড়া 401 (যেমন public endpoint accidentally protected) এ redirect করা হয় না।
     if (response.status === 401 && tokenAttached) {
       handleSessionExpired();
     }
