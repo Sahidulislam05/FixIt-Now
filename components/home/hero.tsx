@@ -52,15 +52,6 @@ export function Hero({ services, categories, totals, loading }: HeroProps) {
     <section className="relative overflow-hidden border-b">
       <div className="mx-auto grid min-h-[64vh] max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:py-16">
         <div>
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="eyebrow mb-6 flex items-center gap-2"
-          >
-            <span className="size-2 animate-tick rounded-full bg-success" />
-            Technicians taking bookings in Dhaka today
-          </motion.p>
-
           <h1 className="text-[2.6rem] leading-[1.02] font-semibold tracking-tight text-balance sm:text-6xl lg:text-[4.4rem]">
             {["Fix", "the", "leak"].map((word, i) => (
               <motion.span
